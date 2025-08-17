@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Hugging Face / Transformers",
+    "url": "https://github.com/huggingface/transformers",
+    "research_summary": "Transformer provides thousands of pretrained models to perform tasks such as text, vision, and audio.",
+    "activity_level": "High",
+    "relevance_score": "10",
+    "key_features": "Pre-trained models, NLP, computer vision, audio processing"
+  },
+  {
+    "title": "Langchain.ai / LangChain",
+    "url": "https://github.com/langchain-ai/langchain",
+    "research_summary": "LangChain is a framework for developing applications powered by language models.",
+    "activity_level": "High",
+    "relevance_score": "10",
+    "key_features": "Language model integration, application development"
+  },
+  {
+    "title": "AUTOMATIC1111 / Stable Diffusion WebUI",
+    "url": "https://github.com/AUTOMATIC1111/Stable-Diffusion-WebUI",
+    "research_summary": "A browser interface for Stable Diffusion, a powerful text-to-image model.",
+    "activity_level": "High",
+    "relevance_score": "9",
+    "key_features": "Stable Diffusion, image generation, web interface"
+  },
+  {
+    "title": "Significant-Gravitas / AutoGPT",
+    "url": "https://github.com/Significant-Gravitas/AutoGPT",
+    "research_summary": "An experimental open-source attempt to make GPT-4 fully autonomous.",
+    "activity_level": "High",
+    "relevance_score": "9",
+    "key_features": "GPT-4, autonomous agent, AI experimentation"
+  },
+  {
+    "title": "AI Learning",
+    "url": "https://github.com/apachecn/AiLearning",
+    "research_summary": "AI Learning: Data Structures and Algorithms, Machine Learning, Deep Learning, NLP",
+    "activity_level": "High",
+    "relevance_score": "8",
+    "key_features": "Machine learning algorithms, deep learning models, NLP techniques"
+  },
+  {
+    "title": "Evobaso-J/ai-gitlab-code-review",
+    "url": "https://github.com/Evobaso-J/ai-gitlab-code-review",
+    "research_summary": "AI-powered code review tool for GitLab, automating the review process and improving code quality.",
+    "activity_level": "Low",
+    "relevance_score": "7",
+    "key_features": "AI code review, GitLab integration, code quality improvement"
+  }
+]
