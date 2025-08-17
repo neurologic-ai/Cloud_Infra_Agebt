@@ -1,0 +1,259 @@
+[
+  {
+    "metric_id": "inventory.snapshot",
+    "ts": {
+      "from": 1690848000,
+      "to": 1693440000
+    },
+    "counts": {
+      "aws": 1,
+      "azure": 1,
+      "gcp": 1
+    },
+    "by_kind": {
+      "vm": 3
+    }
+  },
+  {
+    "metric_id": "tagging.coverage",
+    "required": [
+      "env",
+      "owner",
+      "cost-center",
+      "service"
+    ],
+    "coverage": 0.3333333333333333,
+    "sample_missing": [
+      {
+        "id": "/subs/xxx/rg/prod-vmss1/instance/2",
+        "missing": [
+          "cost-center"
+        ]
+      },
+      {
+        "id": "projects/p1/zones/us-central1-a/instances/inst-1",
+        "missing": [
+          "cost-center",
+          "service"
+        ]
+      }
+    ]
+  },
+  {
+    "metric_id": "compute.utilization",
+    "fleet_p95": {
+      "cpu": 0.61,
+      "mem": 0.54
+    },
+    "low_util_count": 1,
+    "low_util_ids": [
+      "gce-inst-1"
+    ]
+  },
+  {
+    "metric_id": "k8s.utilization",
+    "nodes": {
+      "cpu_p95": 0.71,
+      "mem_p95": 0.65
+    },
+    "pods": {
+      "cpu_req_vs_used": 0.58,
+      "mem_req_vs_used": 0.62
+    },
+    "binpack_efficiency": 0.74,
+    "pending_pods_p95": 3
+  },
+  {
+    "metric_id": "scaling.effectiveness",
+    "median_reaction_s": 120.0,
+    "thrash_rate": 0.0,
+    "target_violation_pct": 0.5
+  },
+  {
+    "metric_id": "lb.performance",
+    "latency_ms": {
+      "p50": 48.5,
+      "p95": 140.0,
+      "p99": 270.0
+    },
+    "error_rates": {
+      "4xx": 0.015,
+      "5xx": 0.0035
+    },
+    "unhealthy_host_minutes": 14
+  },
+  {
+    "metric_id": "storage.waste",
+    "unattached_volumes": 1,
+    "orphaned_snapshots": 1,
+    "hot_stale_bytes": 62914560
+  },
+  {
+    "metric_id": "iac.coverage_drift",
+    "coverage": 0.3333333333333333,
+    "policy_drift_count": 2
+  },
+  {
+    "metric_id": "availability.incidents",
+    "sev12_30d": 3,
+    "mttr_h": 1.0833333333333333,
+    "slo_breach_hours": 2.4
+  },
+  {
+    "metric_id": "cost.breakdown",
+    "month": "2025-07",
+    "by_dim": {
+      "aws": {
+        "EC2": {
+          "prod": {
+            "ml-team": 123.45
+          }
+        }
+      },
+      "azure": {
+        "VM": {
+          "prod": {
+            "web": 67.8
+          }
+        }
+      },
+      "gcp": {
+        "GCE": {
+          "dev": {
+            "data": 42.1
+          }
+        }
+      }
+    }
+  },
+  {
+    "metric_id": "cost.commit_coverage",
+    "coverage_pct": 1.0,
+    "realized_savings_usd": 417.6,
+    "waste_usd": 431.9999999999999
+  },
+  {
+    "metric_id": "cost.rightsize",
+    "recommendations": 2,
+    "projected_monthly_savings_usd": 129.39999999999998,
+    "top_samples": [
+      {
+        "resource_id": "i-0a1b2c",
+        "current": "m5.large",
+        "recommended": "t3.medium",
+        "monthly_savings": 42.3,
+        "reason": "low utilization"
+      },
+      {
+        "resource_id": "sql-azure-1",
+        "current": "GP_Gen5_8",
+        "recommended": "GP_Gen5_4",
+        "monthly_savings": 87.1,
+        "reason": "CPU < 15%"
+      }
+    ]
+  },
+  {
+    "metric_id": "cost.storage_lifecycle",
+    "eligible_bytes": 62914560,
+    "has_rules_pct": 1.0
+  },
+  {
+    "metric_id": "cost.egress",
+    "by_type": {
+      "inter_region": 942.3,
+      "internet": 3210.5
+    },
+    "spikes": [
+      {
+        "ts": "2025-08-10T13:00:00Z",
+        "delta_gb": 450.0
+      }
+    ]
+  },
+  {
+    "metric_id": "cost.allocation_quality",
+    "tagged_pct": 0.8195843154060425,
+    "attributable_pct": 1.0
+  },
+  {
+    "metric_id": "security.public_exposure",
+    "public_ips": 0,
+    "open_firewall_rules": 2,
+    "public_buckets": 1,
+    "samples": {
+      "ips": [],
+      "rules": [
+        {
+          "id": "sg-1",
+          "cloud": "aws",
+          "rule": "0.0.0.0/0:22",
+          "resource_id": "i-9zzz"
+        },
+        {
+          "id": "nsg-123",
+          "cloud": "azure",
+          "rule": "Any/Any",
+          "resource_id": "vm-prod-1"
+        }
+      ],
+      "buckets": [
+        {
+          "bucket": "ml-prod",
+          "cloud": "aws",
+          "public": true
+        }
+      ]
+    }
+  },
+  {
+    "metric_id": "security.encryption",
+    "at_rest_pct": 1.0,
+    "tls_modern_pct": 1.0
+  },
+  {
+    "metric_id": "security.iam_risk",
+    "users_without_mfa": 1,
+    "old_access_keys": 1,
+    "overly_permissive_principals": 1
+  },
+  {
+    "metric_id": "security.vuln_patch",
+    "critical_open": 1,
+    "agent_coverage_pct": 0.91,
+    "avg_patch_age_days": 19.0
+  },
+  {
+    "metric_id": "security.cspm_summary",
+    "open": {
+      "critical": 1,
+      "high": 1
+    },
+    "aged_over_30d": 0,
+    "top_controls": [
+      {
+        "control": "S3.1",
+        "count": 1
+      },
+      {
+        "control": "NET.0",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "metric_id": "security.rotation",
+    "keys_without_rotation": 1,
+    "secrets_older_90d": 1
+  },
+  {
+    "metric_id": "gpu.cost_efficiency",
+    "gpu_util_avg": 0.63,
+    "usd_per_gpu_hour": 1.006
+  },
+  {
+    "metric_id": "iac.change_velocity",
+    "changes_per_week": 2,
+    "p50_time_to_merge_h": 16.0
+  }
+]
