@@ -1,0 +1,182 @@
+{
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 3,
+      "rationale": "Periodic breaches of SLOs observed, particularly in unhealthy minutes and 4xx error rates.",
+      "details": {
+        "breaches": 2,
+        "worst_lb": "appgw-1"
+      }
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 3,
+      "rationale": "Scaled out after 2 minutes; noticeable delay in reaction time with some overshoot.",
+      "details": {
+        "median_reaction_s": 120,
+        "target_violation_pct": 0.083,
+        "thrash_rate": 0.0
+      }
+    }
+  },
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 5,
+      "rationale": "All resources are encrypted at rest and use modern TLS1.2.",
+      "details": {
+        "at_rest_pct": 1.0,
+        "legacy_tls_endpoints": 0
+      }
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "Significant waste observed with two instances consistently underutilized.",
+      "details": {
+        "low_util_count": 2,
+        "fleet_cpu_p95": 0.30666666666666664,
+        "fleet_mem_p95": 0.26666666666666666
+      }
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 3,
+      "rationale": "One moderately utilized instance and one idle instance; uneven resource usage.",
+      "details": {
+        "low_util_count": 1,
+        "high_util_count": 1
+      }
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 2,
+      "rationale": "Only 50% of resources are fully tagged; cost-center/service missing on the dev node.",
+      "details": {
+        "coverage_pct": 0.5,
+        "missing_examples": [
+          {
+            "id": "gce-1",
+            "missing": [
+              "cost-center",
+              "service"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 2,
+      "rationale": "Approximately 67% IaC coverage with multiple high/critical severity drifts.",
+      "details": {
+        "coverage_pct": 0.67,
+        "high_critical": 2
+      }
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 3,
+      "rationale": "Unattached volume and orphaned snapshot present; however, no hot stale objects detected.",
+      "details": {
+        "unattached": 1,
+        "orphaned_snaps": 1,
+        "hot_stale_objects": 0
+      }
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 5,
+      "rationale": "Idle cost is less than 2% of total.",
+      "details": {
+        "idle_cost_usd": 2.47,
+        "idle_pct": 0.02
+      }
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 3,
+      "rationale": "Two incidents with a moderate MTTR and a significant SLO breach.",
+      "details": {
+        "sev12_30d": 2,
+        "mttr_h": 1.5,
+        "slo_breach_hours": 2.4
+      }
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 3,
+      "rationale": "Coverage is around 66%; moderate underutilization observed.",
+      "details": {
+        "coverage_pct": 0.66,
+        "realized_savings_usd": 1296.0,
+        "waste_usd": 432.0
+      }
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 3,
+      "rationale": "~75% attributable.",
+      "details": {
+        "attributable_pct": 0.75
+      }
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 4,
+      "rationale": "One critical open; coverage 91%; patch age 19d.",
+      "details": {
+        "critical_open": 1,
+        "agent_coverage_pct": 0.91,
+        "avg_patch_age_days": 19
+      }
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 2,
+      "rationale": "Users without MFA and old keys.",
+      "details": {
+        "users_without_mfa": 1,
+        "old_keys": 1,
+        "overly_permissive_principals": 1
+      }
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 1,
+      "rationale": "Systemic exposures in production with public SSH access, a public bucket, and a public IP.",
+      "details": {
+        "open_fw_rules": 1,
+        "public_buckets": 1,
+        "public_ips": 1
+      }
+    }
+  }
+}

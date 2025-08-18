@@ -1,0 +1,18 @@
+{
+  "tagging.coverage": "tagging_coverage.json",
+  "compute.utilization": "compute_utilization.json",
+  "k8s.utilization": "k8s_utilization.json",
+  "scaling.effectiveness": "scaling_effectiveness.json",
+  "db.utilization": "db_utilization.json",
+  "lb.performance": "lb_performance.json",
+  "storage.efficiency": "storage_efficiency.json",
+  "iac.coverage_drift": "iac_coverage_drift.json",
+  "availability.incidents": "availability_incidents.json",
+  "cost.idle_underutilized": "cost_idle_underutilized.json",
+  "cost.commit_coverage": "cost_commit_coverage.json",
+  "cost.allocation_quality": "cost_allocation_quality.json",
+  "security.public_exposure": "security_public_exposure.json",
+  "security.encryption": "security_encryption.json",
+  "security.iam_risk": "security_iam_risk.json",
+  "security.vuln_patch": "security_vuln_patch.json"
+}
