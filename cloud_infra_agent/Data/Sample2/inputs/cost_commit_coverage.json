@@ -1,0 +1,36 @@
+{
+  "commit_inventory": [
+    {
+      "cloud": "aws",
+      "type": "savings_plan",
+      "family": "compute",
+      "term_months": 12,
+      "commit_usd_hour": 2.0,
+      "start": "2025-04-01"
+    },
+    {
+      "cloud": "gcp",
+      "type": "cud",
+      "family": "n1-standard",
+      "term_months": 12,
+      "commit_usd_hour": 1.5,
+      "start": "2025-01-01"
+    }
+  ],
+  "usage": [
+    {
+      "cloud": "aws",
+      "family": "compute",
+      "used_usd_hour": 1.8,
+      "hours": 720
+    },
+    {
+      "cloud": "gcp",
+      "family": "n1-standard",
+      "used_usd_hour": 1.1,
+      "hours": 720
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

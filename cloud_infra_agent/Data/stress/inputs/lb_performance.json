@@ -1,0 +1,21 @@
+{
+  "load_balancers": [
+    {
+      "id": "alb-7",
+      "lat_p50": 200,
+      "lat_p95": 360,
+      "lat_p99": 520,
+      "r4xx": 0.03,
+      "r5xx": 0.02,
+      "unhealthy_minutes": 25,
+      "requests": 2500000
+    }
+  ],
+  "slo": {
+    "p95_ms": 200,
+    "p99_ms": 350,
+    "max_5xx_rate": 0.01
+  },
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 1
+}

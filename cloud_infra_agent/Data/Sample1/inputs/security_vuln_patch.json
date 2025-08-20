@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "CVE-2025-0001",
+      "severity": "CRITICAL",
+      "resource_id": "i-0a1b2c",
+      "resolved": false
+    },
+    {
+      "id": "CVE-2024-9999",
+      "severity": "HIGH",
+      "resource_id": "vmss-2",
+      "resolved": true
+    }
+  ],
+  "patch_status": {
+    "agent_coverage_pct": 0.91,
+    "avg_patch_age_days": 19
+  },
+  "denominators": {"total_assets": 40, "scanned_assets": 23}
+}

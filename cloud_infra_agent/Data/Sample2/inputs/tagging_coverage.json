@@ -1,0 +1,32 @@
+{
+  "resources": [
+    {
+      "cloud": "aws",
+      "id": "i-0a1b2c",
+      "kind": "vm",
+      "tags": {
+        "env": "prod",
+        "owner": "ml-team",
+        "cost-center": "CC101",
+        "service": "fraud"
+      }
+    },
+    {
+      "cloud": "gcp",
+      "id": "gce-1",
+      "kind": "vm",
+      "tags": {
+        "env": "dev",
+        "owner": "data"
+      }
+    }
+  ],
+  "required_tags": [
+    "env",
+    "owner",
+    "cost-center",
+    "service"
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

@@ -1,0 +1,17 @@
+{
+  "nodes": {
+    "cpu_p95": 0.62,
+    "mem_p95": 0.55
+  },
+  "pods": {
+    "cpu_req_vs_used": 0.68,
+    "mem_req_vs_used": 0.63
+  },
+  "binpack_efficiency": 0.71,
+  "pending_pods_p95": 6,
+  "sample_size": {
+    "nodes": 14,
+    "pods": 260
+  },
+  "window": "2025-07-20..2025-08-19"
+}

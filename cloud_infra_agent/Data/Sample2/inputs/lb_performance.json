@@ -1,0 +1,31 @@
+{
+  "load_balancers": [
+    {
+      "id": "alb-1",
+      "lat_p50": 42,
+      "lat_p95": 130,
+      "lat_p99": 260,
+      "r4xx": 0.018,
+      "r5xx": 0.003,
+      "unhealthy_minutes": 10,
+      "requests": 100000
+    },
+    {
+      "id": "appgw-1",
+      "lat_p50": 55,
+      "lat_p95": 150,
+      "lat_p99": 280,
+      "r4xx": 0.012,
+      "r5xx": 0.004,
+      "unhealthy_minutes": 4,
+      "requests": 100000
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2,
+  "slo": {
+    "p95_ms": 150,
+    "p99_ms": 300,
+    "max_5xx_rate": 0.01
+  }
+}

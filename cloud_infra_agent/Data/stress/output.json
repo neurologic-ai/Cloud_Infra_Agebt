@@ -1,0 +1,318 @@
+{
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 4,
+      "rationale": "Both resources are fully tagged, but the critical tag 'cost-center' is present on both. This meets the target with minor risks due to the limited sample size.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "critical_tags_pct": 1.0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P2",
+          "action": "Monitor tagging compliance regularly to ensure continued adherence"
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 5,
+      "rationale": "All instances are operating well within the optimal CPU and memory utilization ranges, with no low-utilization outliers detected.",
+      "evidence": {
+        "instances_at_optimal_utilization": 2,
+        "total_instances": 2,
+        "low_util_hours": 0,
+        "cpu_p95": 0.895,
+        "mem_p95": 0.82
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 4,
+      "rationale": "All resources are encrypted at rest and the load balancer uses TLS1.2, indicating good security practices with only minor risks.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls_policy": "TLS1.2"
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P2",
+          "action": "Monitor for any updates to TLS policies to ensure continued compliance with modern standards."
+        }
+      ],
+      "confidence": 1.0
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 2,
+      "rationale": "The autoscaler exhibited a delayed reaction with significant target violations, as actual CPU usage consistently exceeded the target. The thrash rate is not provided, but the frequent scaling actions indicate potential instability.",
+      "evidence": {
+        "median_reaction_s": 420,
+        "target_violation_pct": 0.53,
+        "thrash_rate": null,
+        "events": 3
+      },
+      "gaps": [
+        "thrash_rate"
+      ],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate the cause of high CPU usage and adjust scaling policies."
+        },
+        {
+          "priority": "P1",
+          "action": "Implement more aggressive scaling out to prevent sustained violations."
+        },
+        {
+          "priority": "P2",
+          "action": "Monitor for thrash and adjust cooldown periods accordingly."
+        }
+      ],
+      "confidence": 0.6
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 5,
+      "rationale": "All resources in the inventory are IaC-managed, with no high or critical drift reported. This indicates excellent coverage and control over the infrastructure.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "high_critical": 0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 4,
+      "rationale": "The databases show good CPU and connection utilization, with both metrics within acceptable ranges. There are minor risks due to occasional spikes, but overall performance is stable.",
+      "evidence": {
+        "cpu_p95": {
+          "db-7": 0.82,
+          "db-8": 0.76
+        },
+        "connections_p95": {
+          "db-7": 0.78,
+          "db-8": 0.8
+        }
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor for potential spikes in CPU and connections to ensure they remain balanced."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 2,
+      "rationale": "The p95 latency of 360 ms exceeds the SLO of 200 ms, indicating a frequent breach. Additionally, the p99 latency of 520 ms is also above the SLO of 350 ms, and the 5xx error rate of 0.02 exceeds the maximum allowed rate of 0.01, indicating material risks.",
+      "evidence": {
+        "p95_ms": 360,
+        "p99_ms": 520,
+        "r5xx": 0.02,
+        "unhealthy_minutes": 25,
+        "requests": 2500000
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate and resolve latency issues to meet p95 and p99 SLOs."
+        },
+        {
+          "priority": "P0",
+          "action": "Reduce 5xx error rate by identifying and fixing underlying causes."
+        },
+        {
+          "priority": "P1",
+          "action": "Monitor unhealthy minutes and take corrective actions to minimize downtime."
+        }
+      ],
+      "confidence": 0.7
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 3,
+      "rationale": "There is one orphaned snapshot that indicates noticeable waste, but the attached volume suggests some level of efficiency. The presence of a single snapshot without a source volume raises concerns about potential costs.",
+      "evidence": {
+        "unattached": 0,
+        "orphaned_snaps": 1,
+        "hot_stale_objects": 0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Delete the orphaned snapshot to reduce waste"
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 5,
+      "rationale": "All costs are attributable with complete tagging, indicating excellent cost allocation quality.",
+      "evidence": {
+        "attributable_pct": 1.0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 5,
+      "rationale": "The idle cost is less than 2% of the total spend, indicating excellent resource utilization with no material risks.",
+      "evidence": {
+        "idle_cost": 0,
+        "idle_pct": 0.0,
+        "total_cost": 45000.0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 5,
+      "rationale": "There are no public buckets or public IPs, indicating excellent security posture with no material risks.",
+      "evidence": {
+        "open_fw_rules": 0,
+        "public_buckets": 0,
+        "public_ips": 0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 3,
+      "rationale": "There was one Sev2 incident with a mean time to resolution (MTTR) of 2 hours, and there were 2 hours of SLO breach time. This indicates clear risks that need to be addressed.",
+      "evidence": {
+        "sev12_30d": 1,
+        "mttr_h": 2.0,
+        "slo_breach_hours": 2.0,
+        "slo_target": 0.995
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate the cause of the Sev2 incident to prevent recurrence."
+        },
+        {
+          "priority": "P1",
+          "action": "Review SLO compliance and adjust monitoring thresholds as necessary."
+        },
+        {
+          "priority": "P2",
+          "action": "Implement a post-incident review process to identify improvement areas."
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 4,
+      "rationale": "Coverage is approximately 94% with about 6% unused commitments, which meets the target with minor risks.",
+      "evidence": {
+        "coverage_pct": 0.94,
+        "unused_commitment_pct": 0.06
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor usage trends to ensure continued alignment with commitments."
+        }
+      ],
+      "confidence": 0.95
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 2,
+      "rationale": "While all users have MFA enabled, there is a wildcard policy that grants broad permissions, which presents a material risk.",
+      "evidence": {
+        "users_without_mfa": 0,
+        "old_keys": 1,
+        "overly_permissive_principals": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Replace wildcard admin policy with least-privilege roles"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 3,
+      "rationale": "The agent coverage is at 91%, which is near the target, but the average patch age is 21 days, indicating clear risks. Additionally, there is one unresolved medium severity finding, which contributes to the overall risk profile.",
+      "evidence": {
+        "agent_coverage_pct": 0.91,
+        "avg_patch_age_days": 21,
+        "resolved_medium_findings": 0,
+        "total_assets": 540,
+        "scanned_assets": 520
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Resolve the medium severity finding as soon as possible."
+        },
+        {
+          "priority": "P1",
+          "action": "Reduce average patch age by prioritizing patches older than 21 days."
+        },
+        {
+          "priority": "P1",
+          "action": "Increase agent coverage to meet or exceed 95%."
+        }
+      ],
+      "confidence": 0.85
+    }
+  }
+}

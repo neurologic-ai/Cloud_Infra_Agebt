@@ -1,0 +1,24 @@
+{
+  "instances": [
+    {
+      "id": "i-0a1b2c",
+      "cpu_p95": 0.22,
+      "mem_p95": 0.18,
+      "low_util_hours_30d": 180
+    },
+    {
+      "id": "vmss-2",
+      "cpu_p95": 0.61,
+      "mem_p95": 0.54,
+      "low_util_hours_30d": 12
+    },
+    {
+      "id": "gce-inst-1",
+      "cpu_p95": 0.09,
+      "mem_p95": 0.08,
+      "low_util_hours_30d": 210
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 3
+}

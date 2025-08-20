@@ -1,0 +1,29 @@
+{
+  "inventory": [
+    {
+      "id": "i-7"
+    },
+    {
+      "id": "i-8"
+    },
+    {
+      "id": "db-7"
+    },
+    {
+      "id": "db-8"
+    }
+  ],
+  "iac_index": {
+    "i-7": true,
+    "i-8": true,
+    "db-7": true,
+    "db-8": true
+  },
+  "policy_findings": [
+    {
+      "severity": "medium"
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 4
+}

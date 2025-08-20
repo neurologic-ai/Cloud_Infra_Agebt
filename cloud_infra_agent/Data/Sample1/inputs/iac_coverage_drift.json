@@ -1,0 +1,34 @@
+{
+  "inventory": [
+    {
+      "id": "i-0a1b2c"
+    },
+    {
+      "id": "alb-1"
+    },
+    {
+      "id": "rds-a"
+    }
+  ],
+  "iac_index": {
+    "i-0a1b2c": true,
+    "alb-1": false,
+    "rds-a": true
+  },
+  "policy_findings": [
+    {
+      "id": "POL-001",
+      "control": "no_public_ip_vm",
+      "severity": "high",
+      "resource_id": "i-9zzz",
+      "status": "noncompliant"
+    },
+    {
+      "id": "POL-002",
+      "control": "nsg_no_any_any",
+      "severity": "critical",
+      "resource_id": "nsg-123",
+      "status": "noncompliant"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "inventory": [
+    {
+      "id": "i-1"
+    },
+    {
+      "id": "i-2"
+    },
+    {
+      "id": "db-1"
+    }
+  ],
+  "iac_index": {
+    "i-1": true,
+    "i-2": true,
+    "db-1": true
+  },
+  "policy_findings": [],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 3
+}

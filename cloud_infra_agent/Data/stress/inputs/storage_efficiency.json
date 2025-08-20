@@ -1,0 +1,26 @@
+{
+  "block_volumes": [
+    {
+      "id": "vol-71",
+      "attached": true
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "snap-71",
+      "source_volume": "vol-71"
+    },
+    {
+      "id": "snap-72",
+      "source_volume": null
+    }
+  ],
+  "objects": [
+    {
+      "storage_class": "STANDARD",
+      "last_modified": "2025-05-01T00:00:00Z"
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 1
+}

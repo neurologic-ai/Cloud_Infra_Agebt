@@ -1,0 +1,375 @@
+{
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "The fleet shows significant idle capacity, with one instance having a low utilization of CPU and memory. The overall low utilization hours indicate material risks.",
+      "evidence": {
+        "idle_pct": 0.5,
+        "worst_idle_hours": 120,
+        "fleet_cpu_p95": 0.39,
+        "fleet_mem_p95": 0.44
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Rightsize or stop idle instance 'i-3' to reduce low utilization"
+        },
+        {
+          "priority": "P1",
+          "action": "Monitor utilization trends and adjust instance types accordingly"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 4,
+      "rationale": "All resources are encrypted at rest, and the load balancer uses a modern TLS policy. However, there is a minor gap in the TLS policy versioning that could be addressed.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls_policy": "TLS1.2"
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P2",
+          "action": "Monitor for updates to TLS policies and ensure compliance with the latest standards."
+        }
+      ],
+      "confidence": 1.0
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 2,
+      "rationale": "The autoscaler has missed the target CPU utilization significantly, with actual CPU usage exceeding the target in all recorded instances. This indicates material risks in maintaining performance and resource allocation.",
+      "evidence": {
+        "target_violation_pct": 33.33,
+        "events": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate the cause of sustained high CPU usage and adjust scaling policies."
+        },
+        {
+          "priority": "P1",
+          "action": "Consider increasing the target CPU threshold to better match actual usage."
+        },
+        {
+          "priority": "P2",
+          "action": "Monitor CPU usage closely for the next week to identify patterns."
+        }
+      ],
+      "confidence": 0.7
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 2,
+      "rationale": "The fleet shows significant CPU underutilization with one database operating at only 18% CPU utilization, indicating a material risk of inefficiency. The other database is within acceptable limits but does not compensate for the low performance of the first.",
+      "evidence": {
+        "low_util_count": 1,
+        "high_util_count": 1,
+        "fleet_cpu_p95_avg": 0.46
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate and optimize the configuration of DB 'db-4' to improve CPU utilization."
+        },
+        {
+          "priority": "P1",
+          "action": "Consider consolidating workloads or resizing DB 'db-4' to better match demand."
+        }
+      ],
+      "confidence": 0.75,
+      "window": "2025-07-20..2025-08-19",
+      "sample_size": 2
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 4,
+      "rationale": "Latency metrics are near the SLO with p95 at 160 ms, which is below the SLO of 180 ms, and p99 at 260 ms, below the SLO of 350 ms. The 5xx error rate is slightly above the target but remains rare, indicating minor risks.",
+      "evidence": {
+        "p95_ms": 160,
+        "p99_ms": 260,
+        "r5xx": 0.006,
+        "unhealthy_minutes": 8,
+        "requests": 900000
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor latency trends closely to ensure they remain within SLO."
+        },
+        {
+          "priority": "P1",
+          "action": "Investigate the cause of the 5xx errors to reduce their occurrence."
+        },
+        {
+          "priority": "P2",
+          "action": "Review load balancer capacity to handle peak loads effectively."
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 2,
+      "rationale": "Only 66.67% of resources are fully tagged, with many critical tags missing, particularly on production resources. This poses material risks regarding resource management and accountability.",
+      "evidence": {
+        "coverage_pct": 0.6667,
+        "missing_examples": [
+          {
+            "id": "db-3",
+            "missing": [
+              "owner",
+              "cost-center",
+              "service"
+            ]
+          },
+          {
+            "id": "i-4",
+            "missing": [
+              "cost-center",
+              "service"
+            ]
+          }
+        ]
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Tag all production resources with missing critical tags immediately"
+        },
+        {
+          "priority": "P1",
+          "action": "Implement a tagging policy to ensure all resources are tagged with env, owner, cost-center, and service"
+        },
+        {
+          "priority": "P2",
+          "action": "Conduct a tagging audit to identify and rectify gaps in resource tagging"
+        }
+      ],
+      "confidence": 0.7
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 4,
+      "rationale": "There is one unattached volume, which indicates minor waste, but the attached volume and snapshot usage are appropriate. The presence of only one unattached volume suggests that the system is generally well-managed.",
+      "evidence": {
+        "unattached": 1,
+        "attached": 1,
+        "snapshots": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Evaluate the unattached volume for potential deletion or reattachment."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 2,
+      "rationale": "Only 50% of the resources are IaC-managed, and there is at least one high-severity drift finding. This indicates material risks in resource management and compliance.",
+      "evidence": {
+        "coverage_pct": 0.5,
+        "high_critical": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Onboard unmanaged resources to IaC management and address the high-severity drift"
+        }
+      ],
+      "confidence": 0.7
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 4,
+      "rationale": "Coverage is at 75% with 25% unused commitments, indicating minor risks that need to be addressed.",
+      "evidence": {
+        "coverage_pct": 0.75,
+        "unused_commitment_pct": 0.25
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Analyze usage patterns to optimize commitments and reduce unused capacity."
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 2,
+      "rationale": "Only 45% of costs are attributable due to missing tags, indicating material risks in cost allocation.",
+      "evidence": {
+        "attributable_pct": 0.45454545454545453
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Implement mandatory tagging for all cost entries to improve attribution"
+        },
+        {
+          "priority": "P1",
+          "action": "Review and tag existing untagged costs to enhance visibility"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 2,
+      "rationale": "The idle cost represents a significant share of total spend, indicating material risks associated with underutilized resources. The total idle cost is calculated to be 220 USD, which is approximately 1.57% of the total spend, but the distribution of utilization suggests potential inefficiencies.",
+      "evidence": {
+        "idle_cost": 220,
+        "idle_pct": 0.0157,
+        "total_cost": 14000
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Analyze instance 'i-3' for potential downsizing or termination due to low utilization."
+        },
+        {
+          "priority": "P1",
+          "action": "Implement monitoring to track utilization trends and identify further idle resources."
+        }
+      ],
+      "confidence": 0.85
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 3,
+      "rationale": "There was one Sev2 incident with a mean time to resolution (MTTR) of 2 hours, and there were SLO breaches totaling 1.4 hours. This indicates clear risks that need to be addressed.",
+      "evidence": {
+        "sev12_30d": 1,
+        "mttr_h": 2.0,
+        "slo_breach_hours": 1.4,
+        "slo_target": 0.995
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Analyze the Sev2 incident for root causes and implement corrective actions."
+        },
+        {
+          "priority": "P1",
+          "action": "Review SLO performance and adjust monitoring thresholds as necessary."
+        },
+        {
+          "priority": "P2",
+          "action": "Conduct a team training session on incident response and resolution."
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 2,
+      "rationale": "The presence of a network policy allowing access from 0.0.0.0/22 on port 443 indicates a material risk of exposure. Although there are no public buckets and the inventory shows no public IPs, the open rule poses a significant vulnerability.",
+      "evidence": {
+        "open_fw_rules": 1,
+        "public_buckets": 0,
+        "public_ips": 0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Restrict the network policy to specific trusted IP ranges"
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 3,
+      "rationale": "There is one user without MFA, which presents a clear risk. The key age is acceptable, but the presence of a user without MFA indicates that there are some exceptions across accounts.",
+      "evidence": {
+        "users_without_mfa": 1,
+        "old_keys": 0,
+        "overly_permissive_principals": 0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Enable MFA for the user without it immediately"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 2,
+      "rationale": "Agent coverage is below the target at 82%, and the average patch age is 26 days, which exceeds the acceptable range for critical vulnerabilities. Additionally, there is one unresolved high severity finding, indicating material risks.",
+      "evidence": {
+        "agent_coverage_pct": 0.82,
+        "avg_patch_age_days": 26,
+        "high_open": 1,
+        "scanned_assets": 230,
+        "total_assets": 260
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Resolve the unresolved high severity finding immediately."
+        },
+        {
+          "priority": "P0",
+          "action": "Reduce average patch age to below 21 days by prioritizing older patches."
+        },
+        {
+          "priority": "P1",
+          "action": "Increase agent coverage from 82% to at least 90%."
+        }
+      ],
+      "confidence": 0.7
+    }
+  }
+}

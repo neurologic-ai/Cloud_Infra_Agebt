@@ -1,0 +1,408 @@
+[
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "None",
+      "security_posture": "Basic security policy in place",
+      "reliability_availability": "No redundancy or failover",
+      "cost_optimization": "No cost management practices",
+      "monitoring_alerting": "Basic logging, no alerts",
+      "backup_dr": "No backup or disaster recovery plan",
+      "deployment_maturity": "Manual deployment processes"
+    },
+    "best_practices": [
+      "Use version control",
+      "Implement code reviews"
+    ],
+    "risks": [
+      "Lack of security measures",
+      "No backup strategy"
+    ],
+    "optimization_opportunities": [
+      "Implement IaC tools",
+      "Set up monitoring and alerts"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices",
+      "reliability_availability": "Limited availability measures",
+      "cost_optimization": "No cost management tools",
+      "monitoring_alerting": "Basic monitoring via Travis CI",
+      "backup_dr": "No backup or disaster recovery plans",
+      "deployment_maturity": "Manual deployments"
+    },
+    "best_practices": [
+      "Use of version control",
+      "Documentation present"
+    ],
+    "risks": [
+      "Lack of automated testing",
+      "No disaster recovery plan"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD pipelines",
+      "Use infrastructure as code"
+    ],
+    "cloud_maturity_score": 2
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices noted",
+      "reliability_availability": "Moderate reliability features mentioned",
+      "cost_optimization": "No specific optimizations found",
+      "monitoring_alerting": "Basic monitoring tools listed",
+      "backup_dr": "No backup or disaster recovery mentioned",
+      "deployment_maturity": "Tools for deployment maturity present"
+    },
+    "best_practices": [
+      "Use of open-source libraries",
+      "Regular updates and maintenance"
+    ],
+    "risks": [
+      "Lack of comprehensive security measures",
+      "Potential for outdated tools"
+    ],
+    "optimization_opportunities": [
+      "Implement infrastructure as code",
+      "Enhance monitoring capabilities"
+    ],
+    "cloud_maturity_score": 2
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "Makefile present",
+      "security_posture": "Security policy defined",
+      "reliability_availability": "Benchmarking scripts available",
+      "cost_optimization": "No clear evidence",
+      "monitoring_alerting": "Grafana integration in YAML",
+      "backup_dr": "No clear evidence",
+      "deployment_maturity": "CI/CD practices implied"
+    },
+    "best_practices": [
+      "Use of Apache License",
+      "Community contribution guidelines"
+    ],
+    "risks": [
+      "Remote code execution risks",
+      "Dependency on external models"
+    ],
+    "optimization_opportunities": [
+      "Improve cost management",
+      "Enhance monitoring capabilities"
+    ],
+    "cloud_maturity_score": 3
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "None",
+      "security_posture": "Basic",
+      "reliability_availability": "Moderate",
+      "cost_optimization": "None",
+      "monitoring_alerting": "None",
+      "backup_dr": "None",
+      "deployment_maturity": "Basic"
+    },
+    "best_practices": [
+      "Use of open-source libraries",
+      "Regular updates to dependencies"
+    ],
+    "risks": [
+      "Lack of automated testing",
+      "No defined backup strategy"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD pipelines",
+      "Enhance monitoring tools"
+    ],
+    "cloud_maturity_score": 2
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices noted",
+      "reliability_availability": "No redundancy mentioned",
+      "cost_optimization": "No cost management strategies found",
+      "monitoring_alerting": "Basic monitoring via GitHub issues",
+      "backup_dr": "No backup or disaster recovery plans",
+      "deployment_maturity": "Manual deployment process"
+    },
+    "best_practices": [
+      "Use of GitHub for collaboration",
+      "Open source licensing"
+    ],
+    "risks": [
+      "Lack of automated testing",
+      "No clear security policies"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD pipelines",
+      "Enhance security measures"
+    ],
+    "cloud_maturity_score": 2
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "none",
+      "security_posture": "basic",
+      "reliability_availability": "low",
+      "cost_optimization": "none",
+      "monitoring_alerting": "none",
+      "backup_dr": "none",
+      "deployment_maturity": "low"
+    },
+    "best_practices": [
+      "Use version control",
+      "Document architecture"
+    ],
+    "risks": [
+      "Lack of security measures",
+      "No backup strategy"
+    ],
+    "optimization_opportunities": [
+      "Implement IaC",
+      "Enhance monitoring"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": true,
+      "Azure": false,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "Docker used",
+      "security_posture": "API key validation",
+      "reliability_availability": "Docker restart policy",
+      "cost_optimization": "No clear evidence",
+      "monitoring_alerting": "Basic logging",
+      "backup_dr": "No evidence found",
+      "deployment_maturity": "Docker deployment"
+    },
+    "best_practices": [
+      "Use of Docker for deployment",
+      "API key management"
+    ],
+    "risks": [
+      "No backup strategy",
+      "Limited cost management"
+    ],
+    "optimization_opportunities": [
+      "Implement monitoring tools",
+      "Explore cloud cost management tools"
+    ],
+    "cloud_maturity_score": 3
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "None",
+      "security_posture": "Basic",
+      "reliability_availability": "Low",
+      "cost_optimization": "None",
+      "monitoring_alerting": "None",
+      "backup_dr": "None",
+      "deployment_maturity": "Low"
+    },
+    "best_practices": [
+      "Use of README for documentation",
+      "MIT License for open-source"
+    ],
+    "risks": [
+      "Lack of security measures",
+      "No backup strategy"
+    ],
+    "optimization_opportunities": [
+      "Implement infrastructure as code",
+      "Enhance monitoring and alerting"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices",
+      "reliability_availability": "Limited availability features",
+      "cost_optimization": "No cost management tools",
+      "monitoring_alerting": "Basic monitoring setup",
+      "backup_dr": "No backup or DR plans",
+      "deployment_maturity": "Manual deployments"
+    },
+    "best_practices": [
+      "Use version control",
+      "Document project structure"
+    ],
+    "risks": [
+      "Lack of automated testing",
+      "No disaster recovery plan"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD",
+      "Use cloud-native services"
+    ],
+    "cloud_maturity_score": 2
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "None",
+      "security_posture": "Basic",
+      "reliability_availability": "Moderate",
+      "cost_optimization": "None",
+      "monitoring_alerting": "None",
+      "backup_dr": "None",
+      "deployment_maturity": "Basic"
+    },
+    "best_practices": [
+      "Use of open-source resources",
+      "Community engagement through contributions"
+    ],
+    "risks": [
+      "Lack of automation",
+      "Limited security measures"
+    ],
+    "optimization_opportunities": [
+      "Implement infrastructure as code",
+      "Enhance monitoring and alerting"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices",
+      "reliability_availability": "No redundancy",
+      "cost_optimization": "No cost management",
+      "monitoring_alerting": "Basic logging",
+      "backup_dr": "No backup strategy",
+      "deployment_maturity": "Manual deployments"
+    },
+    "best_practices": [
+      "Use version control",
+      "Document code and processes"
+    ],
+    "risks": [
+      "Data loss due to lack of backups",
+      "Security vulnerabilities"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD",
+      "Automate infrastructure provisioning"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "None",
+      "security_posture": "Basic",
+      "reliability_availability": "Moderate",
+      "cost_optimization": "None",
+      "monitoring_alerting": "None",
+      "backup_dr": "None",
+      "deployment_maturity": "Basic"
+    },
+    "best_practices": [
+      "Use version control",
+      "Document projects clearly"
+    ],
+    "risks": [
+      "Lack of automation",
+      "No backup strategy"
+    ],
+    "optimization_opportunities": [
+      "Implement IaC",
+      "Enhance monitoring"
+    ],
+    "cloud_maturity_score": 1
+  },
+  {
+    "cloud_providers": {
+      "AWS": false,
+      "Azure": true,
+      "GCP": false
+    },
+    "metrics": {
+      "infra_as_code_automation": "No evidence",
+      "security_posture": "Basic security practices",
+      "reliability_availability": "Limited reliability measures",
+      "cost_optimization": "No cost management strategies",
+      "monitoring_alerting": "Basic monitoring in place",
+      "backup_dr": "No backup or disaster recovery plans",
+      "deployment_maturity": "Manual deployments"
+    },
+    "best_practices": [
+      "Use of version control",
+      "Documentation available"
+    ],
+    "risks": [
+      "Lack of automated testing",
+      "No clear security policies"
+    ],
+    "optimization_opportunities": [
+      "Implement CI/CD pipelines",
+      "Enhance monitoring tools"
+    ],
+    "cloud_maturity_score": 2
+  }
+]

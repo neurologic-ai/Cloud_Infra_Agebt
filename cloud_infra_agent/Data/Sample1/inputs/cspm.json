@@ -1,0 +1,16 @@
+{
+  "cspm_findings": [
+    {
+      "id": "S3.1",
+      "severity": "HIGH",
+      "resource_id": "ml-prod",
+      "opened_at": "2025-07-01"
+    },
+    {
+      "id": "NET.0",
+      "severity": "CRITICAL",
+      "resource_id": "nsg-123",
+      "opened_at": "2025-06-15"
+    }
+  ]
+}

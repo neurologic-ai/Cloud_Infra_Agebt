@@ -1,0 +1,44 @@
+{
+  "block_volumes": [
+    {
+      "id": "vol-1",
+      "cloud": "aws",
+      "size_gb": 500,
+      "attached": false
+    },
+    {
+      "id": "disk-2",
+      "cloud": "azure",
+      "size_gb": 256,
+      "attached": true
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "snap-1",
+      "cloud": "aws",
+      "source_volume": null
+    },
+    {
+      "id": "snap-2",
+      "cloud": "gcp",
+      "source_volume": "pd-3"
+    }
+  ],
+  "objects": [
+    {
+      "bucket": "ml-prod",
+      "key": "logs/2025/05/01.gz",
+      "size": 10485760,
+      "storage_class": "STANDARD",
+      "last_modified": "2025-05-01T00:00:00Z"
+    },
+    {
+      "bucket": "ml-prod",
+      "key": "archive/2024/01/01.parquet",
+      "size": 52428800,
+      "storage_class": "STANDARD",
+      "last_modified": "2024-01-01T00:00:00Z"
+    }
+  ]
+}

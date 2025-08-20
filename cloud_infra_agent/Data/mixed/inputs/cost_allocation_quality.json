@@ -1,0 +1,16 @@
+{
+  "cost_rows": [
+    {
+      "cost": 220,
+      "tags": {
+        "env": "prod"
+      }
+    },
+    {
+      "cost": 260,
+      "tags": {}
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

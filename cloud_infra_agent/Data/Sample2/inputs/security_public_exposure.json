@@ -1,0 +1,23 @@
+{
+  "network_policies": [
+    {
+      "id": "sg-1",
+      "rule": "0.0.0.0/0:22",
+      "resource_id": "i-9zzz"
+    }
+  ],
+  "storage_acls": [
+    {
+      "bucket": "ml-prod",
+      "public": true
+    }
+  ],
+  "inventory": [
+    {
+      "id": "i-9zzz",
+      "public_ip": true
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 3
+}

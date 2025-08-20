@@ -1,0 +1,31 @@
+{
+  "users": [
+    {
+      "name": "ops-1",
+      "mfa_enabled": false
+    },
+    {
+      "name": "ops-2",
+      "mfa_enabled": false
+    }
+  ],
+  "keys": [
+    {
+      "user": "svc-legacy",
+      "age_days": 420
+    }
+  ],
+  "policies": [
+    {
+      "principal": "admin",
+      "actions": [
+        "*"
+      ],
+      "resources": [
+        "*"
+      ]
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

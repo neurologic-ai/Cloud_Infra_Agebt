@@ -1,0 +1,16 @@
+{
+  "databases": [
+    {
+      "id": "db-7",
+      "cpu_p95": 0.82,
+      "connections_p95": 0.78
+    },
+    {
+      "id": "db-8",
+      "cpu_p95": 0.76,
+      "connections_p95": 0.8
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

@@ -1,0 +1,18 @@
+{
+  "instances": [
+    {
+      "id": "i-1",
+      "cpu_p95": 0.45,
+      "mem_p95": 0.52,
+      "low_util_hours_30d": 6
+    },
+    {
+      "id": "i-2",
+      "cpu_p95": 0.48,
+      "mem_p95": 0.5,
+      "low_util_hours_30d": 4
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

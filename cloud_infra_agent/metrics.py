@@ -1,31 +1,60 @@
 import json
 
 """
-Metric Prompt Builder (corrected)
-- Matches the exact 16 metrics and prompt shapes you marked as correct
-- Adds an "Input JSON Keys and Meanings" section inline in the prompt
-- Use build_prompt(metric_id, task_input) to generate a complete prompt
-
-Valid metric_id values:
-  tagging.coverage, compute.utilization, k8s.utilization, scaling.effectiveness,
-  db.utilization, lb.performance, storage.efficiency, iac.coverage_drift,
-  availability.incidents, cost.idle_underutilized, cost.commit_coverage,
-  cost.allocation_quality, security.public_exposure, security.encryption,
-  security.iam_risk, security.vuln_patch
+Metric Prompt Builder (optimized for Cloud Infra Agent)
+- Universal preamble and unified response format for all metrics
+- Optimized rubrics with clear 1-5 thresholds
+- Example outputs now use 'evidence' (not 'details')
+- build_prompt prints RESPONSE FORMAT before EXAMPLES (reduces anchoring)
 """
 
+# =========================
+# Universal scoring contract
+# =========================
+UNIVERSAL_PREAMBLE = (
+    "You are a Cloud Infra Assessor. Score exactly one metric on a 1-5 scale:\n"
+    "5 = Excellent (exceeds target, no material risks)\n"
+    "4 = Good (meets target, minor risks)\n"
+    "3 = Fair (near target, clear risks to address)\n"
+    "2 = Poor (misses target, material risks)\n"
+    "1 = Critical (significant failure, urgent action)\n\n"
+    "Rules:\n"
+    "- Use only provided data. If required inputs are missing, list them in 'gaps', reduce 'confidence', and adjust the score downward.\n"
+    "- Prefer normalized rates (0..1), p95/p99, and denominators. Cite exact numbers under 'evidence'.\n"
+    "- Keep actions concrete (≤5), prioritized (P0/P1/P2), and focused on the next step.\n"
+    "- Return ONLY the specified JSON. No extra text."
+)
+
+UNIVERSAL_RESPONSE_FORMAT = (
+    '{"metric_id":"<id>",'
+    '"score":<1-5>,'
+    '"rationale":"<2-4 sentences>",'
+    '"evidence":{},'
+    '"gaps":[],'
+    '"actions":[{"priority":"P0|P1|P2","action":"..."}],'
+    '"confidence":<0.0-1.0>'
+)
+
+# =========================
+# Metric definitions
+# =========================
+# Each metric has:
+# - system: the full prompt (universal preamble + rubric)
+# - example_input: canonical JSON example
+# - response_format: always UNIVERSAL_RESPONSE_FORMAT
+# - example_output: example JSON response
+
 METRIC_PROMPTS = {
-    # 1) Tagging coverage — note: sample shows double "SYSTEM:" prefix
+    # 1) Tagging coverage
     "tagging.coverage": {
         "system": (
-            "You are a Cloud FinOps assessor. Score 1–5 (5=excellent) the tagging coverage quality.\n\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
             "RUBRIC:\n"
-            "- 5: ≥95% resources have ALL required tags\n"
-            "- 4: 85–94%\n"
-            "- 3: 70–84%\n"
-            "- 2: 50–69%\n"
-            "- 1: <50%\n"
-            "Also judge risk if key tags (env/owner) are missing even when % is high."
+            "- 5: ≥95% fully tagged AND all critical tags present (env, owner)\n"
+            "- 4: 85-94% fully tagged; critical tags >90%\n"
+            "- 3: 70-84% fully tagged; some gaps in critical tags\n"
+            "- 2: 50-69% fully tagged; many missing critical tags\n"
+            "- 1: <50% fully tagged OR critical tags absent on >25% of prod resources"
         ),
         "example_input": {
             "resources": [
@@ -34,64 +63,57 @@ METRIC_PROMPTS = {
             ],
             "required_tags": ["env", "owner", "cost-center", "service"]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "tagging.coverage",
             "score": 3,
-            "rationale": "~50% fully tagged; cost-center/service missing on some prod nodes.",
-            "details": {"coverage_pct": 0.5, "missing_examples": [{"id": "y", "missing": ["cost-center", "service"]}]}
-        },
-        "response_format": '{"metric_id":"tagging.coverage","score":<1-5>,"rationale":"...","details":{"coverage_pct":<0..1>,"missing_examples":[...]}}',
-        "key_meanings": {
-            "resources": "List of resources to evaluate",
-            "resources[].id": "Unique resource identifier",
-            "resources[].tags": "Key/value tags on the resource",
-            "required_tags": "Array of tag keys that are mandatory for full coverage"
+            "rationale": "~50% fully tagged; missing critical tags on prod resources increases allocation and ownership risk.",
+            "evidence": {"coverage_pct": 0.5, "missing_examples": [{"id": "y", "missing": ["cost-center", "service"]}]},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Enforce env/owner/cost-center/service tags in CI & provisioning"}],
+            "confidence": 0.8
         }
     },
 
     # 2) Compute utilization
     "compute.utilization": {
         "system": (
-            "You are a reliability and cost-efficiency assessor. Score how effectively compute capacity is utilized.\n\n"
-            "RUBRIC (heuristic guidance; you may adjust slightly by context):\n"
-            "- 5: Fleet p95 CPU/mem in 40–70%, <10% low-util hours; minimal waste\n"
-            "- 4: Mostly healthy; 10–20% low-util outliers\n"
-            "- 3: Mixed; 20–35% low-util or frequent skew\n"
-            "- 2: Significant waste; 35–50% low-util\n"
-            "- 1: Largely idle or badly overprovisioned; >50% low-util"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC:\n"
+            "- 5: ≥80% instances at 40-70% CPU/mem; <10% low-util outliers\n"
+            "- 4: 65-79% instances at 40-70% CPU/mem; 10-20% low-util outliers\n"
+            "- 3: 50-64% instances at 40-70% CPU/mem; 20-35% low-util\n"
+            "- 2: 30-49% instances at 40-70% CPU/mem; 36-50% low-util\n"
+            "- 1: <30% instances at 40-70% CPU/mem OR >50% low-util (fleet largely idle)"
         ),
         "example_input": {
             "instances": [
-                {"id": "a", "cpu_p95": 0.55, "mem_p95": 0.51, "low_util_hours_30d": 0},
-                {"id": "b", "cpu_p95": 0.1, "mem_p95": 0.09, "low_util_hours_30d": 200}
+                {"id": "a", "cpu_p95": 0.55, "mem_p95": 0.6, "low_util_hours_30d": 5},
+                {"id": "b", "cpu_p95": 0.1,  "mem_p95": 0.2, "low_util_hours_30d": 200}
             ]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "compute.utilization",
-            "score": 3,
-            "rationale": "Half the fleet well-utilized, half persistently idle.",
-            "details": {"low_util_count": 1, "fleet_cpu_p95": 0.325, "fleet_mem_p95": 0.30}
-        },
-        "response_format": '{"metric_id":"compute.utilization","score":<1-5>,"rationale":"...","details":{"low_util_count":<int>,"fleet_cpu_p95":<0..1>,"fleet_mem_p95":<0..1>}}',
-        "key_meanings": {
-            "instances": "List of compute instances",
-            "instances[].id": "Instance identifier",
-            "instances[].cpu_p95": "95th percentile CPU utilization (0..1)",
-            "instances[].mem_p95": "95th percentile memory utilization (0..1)",
-            "instances[].low_util_hours_30d": "Hours in last 30d where instance was below low-util threshold"
+            "score": 2,
+            "rationale": "Significant idle capacity; half the fleet shows persistent low utilization.",
+            "evidence": {"idle_pct": 0.5, "worst_idle_hours": 200, "fleet_cpu_p95": 0.325, "fleet_mem_p95": 0.40},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Rightsize or stop idle instance 'b' and set off-hours schedules"}],
+            "confidence": 0.9
         }
     },
 
     # 3) K8s utilization
     "k8s.utilization": {
         "system": (
-            "Score k8s capacity efficiency & scheduling.\n\n"
-            "RUBRIC:\n"
-            "- 5: CPU/mem p95 ~60–80%, req_vs_used ~0.7–0.9, binpack ≥0.8, low pending\n"
-            "- 4: Minor headroom waste; binpack ≥0.7\n"
-            "- 3: Mixed signals; binpack 0.6–0.7 or high pending intermittently\n"
-            "- 2: Under-requesting/over-requesting common; binpack <0.6\n"
-            "- 1: Chronic mismatch; many pending pods or extreme overprovision"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (nodes, requests vs usage, packing, pending):\n"
+            "- 5: Nodes 50-70%, req≈used (>80%), binpack >0.8, pending <1\n"
+            "- 4: Nodes 40-75%, req≈used 70-79%, binpack >0.7, pending <3\n"
+            "- 3: Moderate imbalance: binpack 0.6-0.7 OR pending 3-5\n"
+            "- 2: Severe imbalance: binpack 0.5-0.59 OR pending 6-10\n"
+            "- 1: Chronic inefficiency: binpack <0.5 OR >10 pending pods"
         ),
         "example_input": {
             "nodes": {"cpu_p95": 0.6, "mem_p95": 0.58},
@@ -99,237 +121,208 @@ METRIC_PROMPTS = {
             "binpack_efficiency": 0.82,
             "pending_pods_p95": 1
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "k8s.utilization",
             "score": 5,
-            "rationale": "Efficient requests and packing.",
-            "details": {"binpack_efficiency": 0.82}
-        },
-        "response_format": '{"metric_id":"k8s.utilization","score":<1-5>,"rationale":"...","details":{"binpack_efficiency":<0..1>,"pending_pods_p95":<int>}}',
-        "key_meanings": {
-            "nodes.cpu_p95": "Aggregated 95th percentile node CPU utilization (0..1)",
-            "nodes.mem_p95": "Aggregated 95th percentile node memory utilization (0..1)",
-            "pods.cpu_req_vs_used": "Ratio of requested to actually used CPU (0..1)",
-            "binpack_efficiency": "Packing/fragmentation efficiency (0..1)",
-            "pending_pods_p95": "95th percentile of pending pods count"
+            "rationale": "Requests closely match usage with strong bin-packing and minimal pending pods.",
+            "evidence": {"binpack_efficiency": 0.82, "pending_pods_p95": 1, "nodes_cpu_p95": 0.60, "pods_cpu_req_vs_used": 0.80},
+            "gaps": [],
+            "actions": [{"priority": "P2", "action": "Maintain current request/limit ratios; re-verify quarterly"}],
+            "confidence": 0.85
         }
     },
 
     # 4) Scaling effectiveness
     "scaling.effectiveness": {
         "system": (
-            "Evaluate autoscaling health (reaction time, target adherence, thrash).\n\n"
-            "RUBRIC:\n"
-            "- 5: Reacts within 1–2 mins; minimal target violations; no thrash\n"
-            "- 4: Reacts <5 mins; rare violations\n"
-            "- 3: Mixed; noticeable delays or occasional thrash\n"
-            "- 2: Slow (>10 mins) or frequent oscillations\n"
-            "- 1: Chronically late or incorrect scaling"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (reaction, target adherence, thrash):\n"
+            "- 5: Reaction <1 min; <5% target violations; thrash <5%\n"
+            "- 4: Reaction 1-2 min; 5-10% violations; thrash <10%\n"
+            "- 3: Reaction 2-5 min; 10-20% violations; mild thrash\n"
+            "- 2: Reaction 5-10 min; >20% violations; frequent thrash\n"
+            "- 1: Reaction >10 min; sustained violations; severe thrash"
         ),
         "example_input": {
             "ts_metrics": [
                 {"ts": "t0", "target_cpu": 0.6, "actual_cpu": 0.9},
                 {"ts": "t2", "target_cpu": 0.6, "actual_cpu": 0.61}
             ],
-            "scale_events": [{"ts": "t1", "action": "scale_out", "delta": 1}]
+            "scale_events": [{"ts": "t1", "action": "scale_out", "delta": 1}],
+            "window": "2025-08-10T12:00Z..2025-08-10T14:00Z",
+            "sample_size": 240
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "scaling.effectiveness",
             "score": 4,
-            "rationale": "Scaled in ~1 min; brief overshoot only.",
-            "details": {"median_reaction_s": 60, "target_violation_pct": 0.1, "thrash_rate": 0.0}
-        },
-        "response_format": '{"metric_id":"scaling.effectiveness","score":<1-5>,"rationale":"...","details":{"median_reaction_s":<number>,"target_violation_pct":<0..1>,"thrash_rate":<0..1>}}',
-        "key_meanings": {
-            "ts_metrics": "Time series of target vs actual metric (e.g., CPU)",
-            "ts_metrics[].ts": "Timestamp or sequence marker",
-            "ts_metrics[].target_cpu": "Autoscaler target (0..1)",
-            "ts_metrics[].actual_cpu": "Observed utilization (0..1)",
-            "scale_events": "List of scaling actions",
-            "scale_events[].ts": "Timestamp of the scaling action",
-            "scale_events[].action": "Action type (scale_out/scale_in)",
-            "scale_events[].delta": "Change in replica count or capacity"
+            "rationale": "Autoscaler reacted within ~1 minute with brief target violation and no oscillation.",
+            "evidence": {"median_reaction_s": 60, "target_violation_pct": 0.10, "thrash_rate": 0.0, "events": 1},
+            "gaps": [],
+            "actions": [{"priority": "P2", "action": "Tighten cooldown only if future thrash appears; currently acceptable"}],
+            "confidence": 0.8,
+            "window": "2025-08-10T12:00Z..2025-08-10T14:00Z",
+            "sample_size": 240
         }
     },
 
     # 5) DB utilization
     "db.utilization": {
         "system": (
-            "Score DB fleet efficiency & risk (hotspots vs idle waste).\n\n"
-            "RUBRIC:\n"
-            "- 5: Most DBs 40–70% CPU, healthy IOPS, capacity aligned\n"
-            "- 4: Minor outliers\n"
-            "- 3: Mix of idle and hot instances\n"
-            "- 2: Many idle or several saturated\n"
-            "- 1: Widespread saturation or waste"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (CPU, connections, IOPS balance):\n"
+            "- 5: 40-70% CPU, balanced connections, IOPS within limits\n"
+            "- 4: 30-75% CPU, mostly balanced, occasional spikes\n"
+            "- 3: 20-85% CPU with connection/IOPS imbalance at times\n"
+            "- 2: <20% or >85% CPU frequently; recurring bottlenecks\n"
+            "- 1: Chronically idle (<10%) or saturated (>90%) across fleet"
         ),
         "example_input": {
             "databases": [
                 {"id": "a", "cpu_p95": 0.6, "connections_p95": 0.5},
                 {"id": "b", "cpu_p95": 0.1, "connections_p95": 0.1}
-            ]
+            ],
+            "window": "2025-07-20..2025-08-19",
+            "sample_size": 2
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "db.utilization",
             "score": 3,
-            "rationale": "One hot, one idle; uneven sizing.",
-            "details": {"low_util_count": 1, "high_util_count": 0}
-        },
-        "response_format": '{"metric_id":"db.utilization","score":<1-5>,"rationale":"...","details":{"low_util_count":<int>,"high_util_count":<int>}}',
-        "key_meanings": {
-            "databases": "List of database instances",
-            "databases[].id": "Database identifier",
-            "databases[].cpu_p95": "95th percentile CPU utilization (0..1)",
-            "databases[].connections_p95": "95th percentile connection load (0..1)"
+            "rationale": "Fleet shows a mix of idle and moderately loaded databases; sizing is uneven.",
+            "evidence": {"low_util_count": 1, "high_util_count": 0, "fleet_cpu_p95_avg": 0.35},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Downsize or consolidate idle DB 'b'; validate connection limits"}],
+            "confidence": 0.82,
+            "window": "2025-07-20..2025-08-19",
+            "sample_size": 2
         }
     },
 
     # 6) Load balancer performance
     "lb.performance": {
         "system": (
-            "Score LB health vs provided SLOs (latency and 5xx).\n\n"
-            "RUBRIC:\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (latency & 5xx vs SLO):\n"
             "- 5: p95/p99 well under SLO; 5xx rare; minimal unhealthy time\n"
-            "- 4: Near SLO with small spikes\n"
-            "- 3: Periodic breaches\n"
-            "- 2: Frequent breaches or elevated 5xx\n"
-            "- 1: Chronic SLO failures"
+            "- 4: Near SLO with small spikes; rare 5xx\n"
+            "- 3: Periodic SLO breaches or elevated 5xx\n"
+            "- 2: Frequent breaches or sustained 5xx\n"
+            "- 1: Chronic SLO failures and/or major instability"
         ),
         "example_input": {
             "load_balancers": [
-                {"id": "lb", "lat_p95": 180, "lat_p99": 350, "r5xx": 0.001, "unhealthy_minutes": 2}
+                {"id": "alb-1", "lat_p95": 130, "lat_p99": 260, "r5xx": 0.003, "unhealthy_minutes": 2, "requests": 1200000}
             ],
             "slo": {"p95_ms": 200, "p99_ms": 400, "5xx_rate_max": 0.005}
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "lb.performance",
             "score": 5,
-            "rationale": "All SLOs met with margin.",
-            "details": {"breaches": 0}
-        },
-        "response_format": '{"metric_id":"lb.performance","score":<1-5>,"rationale":"...","details":{"breaches":<int>,"worst_lb":"<id>"}}',
-        "key_meanings": {
-            "load_balancers": "List of LBs with health/latency/5xx metrics",
-            "load_balancers[].id": "Load balancer identifier",
-            "load_balancers[].lat_p95": "p95 latency in ms",
-            "load_balancers[].lat_p99": "p99 latency in ms",
-            "load_balancers[].r5xx": "5xx error rate (0..1)",
-            "load_balancers[].unhealthy_minutes": "Minutes marked unhealthy",
-            "slo.p95_ms": "SLO threshold for p95 latency",
-            "slo.p99_ms": "SLO threshold for p99 latency",
-            "slo.5xx_rate_max": "Maximum acceptable 5xx rate"
+            "rationale": "Latency and error‑rate SLOs met with margin; negligible unhealthy time.",
+            "evidence": {"breaches": 0, "worst_lb": "alb-1", "p95_ms": 130, "p99_ms": 260, "r5xx": 0.003, "requests": 1200000},
+            "gaps": [],
+            "actions": [{"priority": "P2", "action": "Maintain capacity & SLO thresholds; review monthly"}],
+            "confidence": 0.86
         }
     },
 
     # 7) Storage efficiency
     "storage.efficiency": {
         "system": (
-            "Score storage efficiency (unattached disks, orphaned snapshots, hot-stale objects).\n\n"
-            "RUBRIC:\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (unattached/orphaned/stale hot data):\n"
             "- 5: No obvious waste\n"
             "- 4: Minor waste\n"
             "- 3: Noticeable but not severe\n"
             "- 2: Significant avoidable cost\n"
-            "- 1: Systemic waste"
+            "- 1: Systemic waste across tiers"
         ),
         "example_input": {
             "block_volumes": [{"id": "v", "attached": False}],
             "snapshots": [{"id": "s", "source_volume": None}],
             "objects": [{"storage_class": "STANDARD", "last_modified": "2024-01-01T00:00:00Z"}]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "storage.efficiency",
             "score": 2,
-            "rationale": "Unattached volumes and orphaned snaps; stale hot storage.",
-            "details": {"unattached": 1, "orphaned_snaps": 1, "hot_stale_objects": 1}
-        },
-        "response_format": '{"metric_id":"storage.efficiency","score":<1-5>,"rationale":"...","details":{"unattached":<int>,"orphaned_snaps":<int>,"hot_stale_objects":<int>}}',
-        "key_meanings": {
-            "block_volumes": "List of block volumes and their attachment state",
-            "block_volumes[].id": "Volume identifier",
-            "block_volumes[].attached": "Boolean attachment flag",
-            "snapshots": "List of snapshots and their source volume linkage",
-            "snapshots[].source_volume": "Volume ID if snapshot has a valid source, else null",
-            "objects": "Object storage items",
-            "objects[].storage_class": "Storage tier/class",
-            "objects[].last_modified": "Timestamp of last modification/access"
+            "rationale": "Unattached volumes and orphaned snapshots indicate avoidable spend; hot tier holds stale objects.",
+            "evidence": {"unattached": 1, "orphaned_snaps": 1, "hot_stale_objects": 1},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Delete orphaned snapshots; reattach or remove volume; set S3 lifecycle to infrequent access"}],
+            "confidence": 0.85
         }
     },
 
     # 8) IaC coverage & drift
     "iac.coverage_drift": {
         "system": (
-            "Score IaC adoption and policy drift severity.\n\n"
-            "RUBRIC:\n"
-            "- 5: ≥90% IaC-managed; no high/critical drift\n"
-            "- 4: 75–89%; few high drifts\n"
-            "- 3: 50–74% or some high drifts\n"
-            "- 2: 25–49% or multiple high/critical drifts\n"
-            "- 1: <25% or widespread critical drift"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (coverage & drift severity):\n"
+            "- 5: ≥95% IaC-managed; no high/critical drift\n"
+            "- 4: 85-94% IaC-managed; minor drift\n"
+            "- 3: 70-84% IaC-managed OR some high drifts\n"
+            "- 2: 50-69% IaC-managed OR multiple high/critical drifts\n"
+            "- 1: <50% IaC-managed OR widespread critical drift"
         ),
         "example_input": {
             "inventory": [{"id": "a"}, {"id": "b"}],
             "iac_index": {"a": True, "b": False},
             "policy_findings": [{"severity": "high"}]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "iac.coverage_drift",
             "score": 3,
-            "rationale": "~50% IaC coverage with high-severity drift.",
-            "details": {"coverage_pct": 0.5, "high_critical": 1}
-        },
-        "response_format": '{"metric_id":"iac.coverage_drift","score":<1-5>,"rationale":"...","details":{"coverage_pct":<0..1>,"high_critical":<int>}}',
-        "key_meanings": {
-            "inventory": "List of resources in scope",
-            "inventory[].id": "Resource identifier",
-            "iac_index": "Map of resource id → whether managed by IaC",
-            "policy_findings": "List of drift/security/policy issues",
-            "policy_findings[].severity": "Severity level (e.g., high, critical)"
+            "rationale": "Coverage sits near 50% with high-severity drift present; unmanaged resources increase change risk.",
+            "evidence": {"coverage_pct": 0.5, "high_critical": 1},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Onboard unmanaged resources to Terraform; remediate high-severity drift"}],
+            "confidence": 0.8
         }
     },
 
     # 9) Availability incidents
     "availability.incidents": {
         "system": (
-            "Score reliability based on Sev1/2 count, MTTR, and SLO breach hours (last 30d).\n\n"
-            "RUBRIC:\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (Sev1/2, MTTR, SLO breach hours):\n"
             "- 5: 0 Sev1/2, MTTR <1h, no SLO breaches\n"
-            "- 4: ≤1 Sev2, MTTR 1–2h, minor SLO breach\n"
-            "- 3: Some incidents, MTTR 2–4h, breaches present\n"
-            "- 2: Frequent incidents or MTTR 4–8h\n"
+            "- 4: ≤1 Sev2, MTTR 1-2h, minor breach hours\n"
+            "- 3: Some incidents, MTTR 2-4h, breaches present\n"
+            "- 2: Frequent incidents or MTTR 4-8h\n"
             "- 1: Severe/frequent incidents, MTTR >8h"
         ),
         "example_input": {
             "incidents": [{"sev": 2, "opened": "t0", "resolved": "t1"}],
-            "slo_breaches": [{"hours": 1.0}]
+            "slo_breaches": [{"hours": 1.0}],
+            "slo": {"objective": "availability", "target": 0.995}
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "availability.incidents",
             "score": 4,
-            "rationale": "One Sev2 quickly resolved; small breach.",
-            "details": {"sev12_30d": 1, "mttr_h": 1.0, "slo_breach_hours": 1.0}
-        },
-        "response_format": '{"metric_id":"availability.incidents","score":<1-5>,"rationale":"...","details":{"sev12_30d":<int>,"mttr_h":<number>,"slo_breach_hours":<number>}}',
-        "key_meanings": {
-            "incidents": "List of Sev1/Sev2 incidents in last 30d",
-            "incidents[].sev": "Incident severity (1 or 2)",
-            "incidents[].opened": "Incident opened timestamp",
-            "incidents[].resolved": "Incident resolved timestamp",
-            "slo_breaches": "List of SLO breach durations",
-            "slo_breaches[].hours": "Hours of SLO breach"
+            "rationale": "A single Sev2 was resolved quickly with limited SLO breach time.",
+            "evidence": {"sev12_30d": 1, "mttr_h": 1.0, "slo_breach_hours": 1.0, "slo_target": 0.995},
+            "gaps": [],
+            "actions": [{"priority": "P2", "action": "Review post-mortem for mitigations; confirm alert thresholds"}],
+            "confidence": 0.85
         }
     },
 
     # 10) Cost — idle underutilized
     "cost.idle_underutilized": {
         "system": (
-            "Estimate waste from idle compute (low-util VMs) and score cost hygiene.\n\n"
-            "RUBRIC:\n"
-            "- 5: Idle cost <2% of total\n"
-            "- 4: 2–5%\n"
-            "- 3: 5–10%\n"
-            "- 2: 10–20%\n"
-            "- 1: >20%\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (idle spend share):\n"
+            "- 5: Idle <2% of total spend\n"
+            "- 4: Idle 2-5% of total spend\n"
+            "- 3: Idle 5-10% of total spend\n"
+            "- 2: Idle 10-20% of total spend\n"
+            "- 1: Idle >20%"
         ),
         "example_input": {
             "cost_rows": [
@@ -338,253 +331,250 @@ METRIC_PROMPTS = {
             ],
             "instances": [
                 {"id": "a", "cpu_p95": 0.05, "mem_p95": 0.07},
-                {"id": "b", "cpu_p95": 0.6, "mem_p95": 0.5}
+                {"id": "b", "cpu_p95": 0.6,  "mem_p95": 0.5}
             ]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "cost.idle_underutilized",
-            "score": 3,
-            "rationale": "~50% of cost is idle.",
-            "details": {"idle_cost_usd": 100, "idle_pct": 0.5}
-        },
-        "response_format": '{"metric_id":"cost.idle_underutilized","score":<1-5>,"rationale":"...","details":{"idle_cost_usd":<number>,"idle_pct":<0..1>}}',
-        "key_meanings": {
-            "cost_rows": "List of resource-level cost entries",
-            "cost_rows[].resource_id": "ID matching an instance or resource",
-            "cost_rows[].cost": "Cost amount (currency units)",
-            "instances": "List of instances with utilization",
-            "instances[].id": "Instance identifier",
-            "instances[].cpu_p95": "95th percentile CPU (0..1)",
-            "instances[].mem_p95": "95th percentile memory (0..1)"
+            "score": 2,
+            "rationale": "Idle cost forms a significant share of spend with persistently underutilized instances.",
+            "evidence": {"idle_cost": 100, "idle_pct": 0.5, "total_cost": 200},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Stop or downsize idle instance 'a'; apply off‑hours schedules"}],
+            "confidence": 0.88
         }
     },
 
     # 11) Cost — commit coverage
     "cost.commit_coverage": {
         "system": (
-            "Score coverage of commitments vs usage and savings realization.\n\n"
-            "RUBRIC:\n"
-            "- 5: ≥90% coverage and high realized savings\n"
-            "- 4: 75–89%\n"
-            "- 3: 50–74%\n"
-            "- 2: 25–49% or notable waste\n"
-            "- 1: <25% or large unused commitments"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (coverage & unused %):\n"
+            "- 5: ≥95% coverage AND <5% unused commitment\n"
+            "- 4: 85-94% coverage AND 5-10% unused commitment\n"
+            "- 3: 70-84% coverage AND 11-20% unused commitment\n"
+            "- 2: 50-69% coverage OR 21-30% unused commitment\n"
+            "- 1: <50% coverage OR >30% unused commitment"
         ),
         "example_input": {
             "commit_inventory": [{"commit_usd_hour": 2.0}],
             "usage": [{"used_usd_hour": 1.8, "hours": 720}]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "cost.commit_coverage",
             "score": 4,
-            "rationale": "~90% coverage; minor underutilization.",
-            "details": {"coverage_pct": 0.9, "waste_usd": 14.4}
-        },
-        "response_format": '{"metric_id":"cost.commit_coverage","score":<1-5>,"rationale":"...","details":{"coverage_pct":<0..1>,"realized_savings_usd":<number>,"waste_usd":<number>}}',
-        "key_meanings": {
-            "commit_inventory": "List of commitment SKUs/terms",
-            "commit_inventory[].commit_usd_hour": "Hourly committed spend capacity",
-            "usage": "List of usage entries for coverage calc",
-            "usage[].used_usd_hour": "Hourly spend that was actually used",
-            "usage[].hours": "Hours in the period"
+            "rationale": "Coverage at ~90% with ~10% unused commitments.",
+            "evidence": {"coverage_pct": 0.90, "waste_usd": 144},
+            "gaps": [],
+            "actions": [
+                {
+                    "priority": "P1",
+                    "action": "Refine commitment mix to reduce ~10% unused commitments."
+                }
+            ],
+            "confidence": 0.9
         }
     },
+
 
     # 12) Cost — allocation quality
     "cost.allocation_quality": {
         "system": (
-            "Score how well spend is attributable via tags/labels/resource IDs.\n\n"
-            "RUBRIC (by cost-weighted attribution %):\n"
-            "- 5: ≥95%\n"
-            "- 4: 90–94%\n"
-            "- 3: 75–89%\n"
-            "- 2: 50–74%\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (cost-weighted attribution):\n"
+            "- 5: ≥95% costs attributable\n"
+            "- 4: 90-94% costs attributable\n"
+            "- 3: 75-89% costs attributable\n"
+            "- 2: 50-74% costs attributable\n"
             "- 1: <50%"
         ),
-        "example_input": {"cost_rows": [{"cost": 100, "tags": {"env": "prod"}}, {"cost": 100, "tags": {}}]},
+        "example_input": {
+            "cost_rows": [
+                {"cost": 100, "tags": {"env": "prod", "owner": "search"}},
+                {"cost": 100, "tags": {}}
+            ]
+        },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "cost.allocation_quality",
             "score": 3,
-            "rationale": "~50% attributable.",
-            "details": {"attributable_pct": 0.5}
-        },
-        "response_format": '{"metric_id":"cost.allocation_quality","score":<1-5>,"rationale":"...","details":{"attributable_pct":<0..1>}}',
-        "key_meanings": {
-            "cost_rows": "List of cost line items",
-            "cost_rows[].cost": "Cost amount (currency units)",
-            "cost_rows[].tags": "Tag dictionary on the cost row used for attribution"
+            "rationale": "Only half of spend is attributable due to missing tags.",
+            "evidence": {"attributable_pct": 0.5},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Enforce owner/env tagging on all cost lines; backfill missing owners"}],
+            "confidence": 0.87
         }
     },
 
     # 13) Security — public exposure
     "security.public_exposure": {
         "system": (
-            "Score exposure risk from open ingress and public storage.\n\n"
-            "RUBRIC:\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (open ingress, public IPs/buckets):\n"
             "- 5: No public buckets; no 0.0.0.0/0 on sensitive ports; minimal public IPs\n"
-            "- 4: Minor issues in dev only\n"
-            "- 3: Some risky rules or public buckets\n"
-            "- 2: Multiple risky exposures\n"
-            "- 1: Systemic exposures in prod"
+            "- 4: Minor/properly approved exceptions in non-prod\n"
+            "- 3: Some risky rules or public buckets with controls\n"
+            "- 2: Multiple unnecessary exposures\n"
+            "- 1: Widespread exposure of sensitive prod assets"
         ),
         "example_input": {
             "network_policies": [{"rule": "0.0.0.0/0:22"}],
-            "storage_acls": [{"public": True}],
-            "inventory": [{"public_ip": True}]
+            "storage_acls": [{"bucket": "ml-prod", "public": True}],
+            "inventory": [{"id": "i-9zzz", "public_ip": True}]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.public_exposure",
             "score": 2,
-            "rationale": "Public SSH and bucket.",
-            "details": {"open_fw_rules": 1, "public_buckets": 1, "public_ips": 1}
-        },
-        "response_format": '{"metric_id":"security.public_exposure","score":<1-5>,"rationale":"...","details":{"open_fw_rules":<int>,"public_buckets":<int>,"public_ips":<int>}}',
-        "key_meanings": {
-            "network_policies": "Firewall/security group or ingress rules",
-            "network_policies[].rule": "CIDR and port expression",
-            "storage_acls": "Bucket/container ACLs",
-            "storage_acls[].public": "Boolean: publicly readable/listable",
-            "inventory": "Inventory entries with exposure attributes",
-            "inventory[].public_ip": "Boolean: has public IP"
+            "rationale": "Public SSH access and a publicly readable bucket raise material exposure risk.",
+            "evidence": {"open_fw_rules": 1, "public_buckets": 1, "public_ips": 1},
+            "gaps": [],
+            "actions": [{"priority": "P0", "action": "Restrict SSH to corporate CIDRs; make bucket private; remove public IPs from prod"}],
+            "confidence": 0.88
         }
     },
 
     # 14) Security — encryption
     "security.encryption": {
         "system": (
-            "Score encryption at-rest and modern TLS adoption.\n\n"
-            "RUBRIC:\n"
-            "- 5: ≥98% encrypted; all LBs TLS1.2+ modern\n"
-            "- 4: ≥95% encrypted; minor TLS gaps\n"
-            "- 3: 85–94% or some legacy TLS\n"
-            "- 2: 70–84% or several legacy endpoints\n"
-            "- 1: <70% or widespread legacy"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (at-rest encryption & TLS policy):\n"
+            "- 5: ~100% encrypted; all endpoints TLS 1.2+ modern\n"
+            "- 4: 90-99% encrypted; minor TLS gaps\n"
+            "- 3: 70-89% encrypted; some legacy TLS\n"
+            "- 2: 50-69% encrypted; several legacy endpoints\n"
+            "- 1: <50% encrypted; widespread legacy TLS"
         ),
         "example_input": {
             "resources": [
-                {"encrypted_at_rest": True},
-                {"encrypted_at_rest": False},
-                {"type": "load_balancer", "tls_policy": "TLS1.0"}
+                {"id": "vol-1", "type": "block_volume", "encrypted_at_rest": True},
+                {"id": "alb-1", "type": "load_balancer", "tls_policy": "TLS1.2-2019-Modern"}
             ]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.encryption",
             "score": 2,
-            "rationale": "Encryption gaps and legacy TLS1.0.",
-            "details": {"at_rest_pct": 0.66, "legacy_tls_endpoints": 1}
-        },
-        "response_format": '{"metric_id":"security.encryption","score":<1-5>,"rationale":"...","details":{"at_rest_pct":<0..1>,"legacy_tls_endpoints":<int>}}',
-        "key_meanings": {
-            "resources": "List of resources/endpoints",
-            "resources[].encrypted_at_rest": "Boolean: encrypted at rest",
-            "resources[].type": "Type of endpoint (e.g., load_balancer)",
-            "resources[].tls_policy": "Negotiated/enforced TLS policy version"
+            "rationale": "Encryption gaps and legacy TLS1.0 indicate elevated risk.",
+            "evidence": {"at_rest_pct": 0.66, "legacy_tls_endpoints": 1},
+            "gaps": [],
+            "actions": [{"priority": "P1", "action": "Enable encryption on remaining volumes; upgrade LB security policy to TLS1.2+ modern"}],
+            "confidence": 0.86
         }
     },
 
     # 15) Security — IAM risk
     "security.iam_risk": {
         "system": (
-            "Score IAM hygiene (MFA, key age, permissive policies).\n\n"
-            "RUBRIC:\n"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (MFA, key age, permissive policies):\n"
             "- 5: 0 users without MFA; no keys >90d; no wildcard admin\n"
             "- 4: Minor exceptions in non-prod\n"
-            "- 3: Some exceptions\n"
-            "- 2: Many exceptions\n"
-            "- 1: Systemic issues (no MFA, broad wildcards)"
+            "- 3: Some exceptions across accounts\n"
+            "- 2: Many exceptions; several wildcard policies\n"
+            "- 1: Systemic issues (no MFA, wildcard admin in prod)"
         ),
         "example_input": {
-            "users": [{"mfa_enabled": False}],
-            "keys": [{"age_days": 120}],
+            "users": [{"name": "a","mfa_enabled": False}],
+            "keys": [{ "user": "user","age_days": 120}],
             "policies": [{"actions": ["*"], "resources": ["*"]}]
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.iam_risk",
             "score": 2,
-            "rationale": "Users without MFA and wildcard admin.",
-            "details": {"users_without_mfa": 1, "old_keys": 1, "overly_permissive_principals": 1}
-        },
-        "response_format": '{"metric_id":"security.iam_risk","score":<1-5>,"rationale":"...","details":{"users_without_mfa":<int>,"old_keys":<int>,"overly_permissive_principals":<int>}}',
-        "key_meanings": {
-            "users": "User accounts",
-            "users[].mfa_enabled": "Boolean: MFA enabled",
-            "keys": "Access keys",
-            "keys[].age_days": "Key age in days",
-            "policies": "IAM policies or role bindings",
-            "policies[].actions": "Actions allowed (supports wildcard)",
-            "policies[].resources": "Resources covered (supports wildcard)"
+            "rationale": "Users without MFA and a wildcard admin policy present elevated compromise risk.",
+            "evidence": {"users_without_mfa": 1, "old_keys": 1, "overly_permissive_principals": 1},
+            "gaps": [],
+            "actions": [
+                {"priority": "P0", "action": "Enforce MFA for all users immediately"},
+                {"priority": "P0", "action": "Replace wildcard admin with least-privilege roles"}
+            ],
+            "confidence": 0.87
         }
     },
 
     # 16) Security — vulnerability & patch hygiene
     "security.vuln_patch": {
         "system": (
-            "Score vulnerability & patch hygiene.\n\n"
-            "RUBRIC:\n"
-            "- 5: 0 critical open; coverage ≥95%; avg patch age <14d\n"
-            "- 4: Few highs; coverage ≥90%; patch age <21d\n"
-            "- 3: Some criticals or age 21–35d\n"
-            "- 2: Multiple criticals; coverage <85% or age 35–60d\n"
-            "- 1: Chronic exposure; coverage <70% or age >60d"
+            f"{UNIVERSAL_PREAMBLE}\n\n"
+            "RUBRIC (coverage, patch latency, criticals):\n"
+            "- 5: ≥95% coverage, avg patch age <14d, 0 critical open\n"
+            "- 4: ≥90% coverage, avg age <21d, few highs\n"
+            "- 3: Some criticals open OR avg age 21-35d\n"
+            "- 2: Multiple criticals; coverage <85% OR age 35-60d\n"
+            "- 1: Chronic exposure; coverage <70% OR age >60d"
         ),
         "example_input": {
             "findings": [{"severity": "CRITICAL", "resolved": False}],
-            "patch_status": {"agent_coverage_pct": 0.9, "avg_patch_age_days": 30}
+            "patch_status": {"agent_coverage_pct": 0.9, "avg_patch_age_days": 30, "sla": {"critical_days": 7, "high_days": 30}},
+            "denominators": {"total_assets": 420, "scanned_assets": 403},
         },
+        "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.vuln_patch",
             "score": 3,
-            "rationale": "One critical open; coverage 90%; patch age 30d.",
-            "details": {"critical_open": 1, "agent_coverage_pct": 0.9, "avg_patch_age_days": 30}
-        },
-        "response_format": '{"metric_id":"security.vuln_patch","score":<1-5>,"rationale":"...","details":{"critical_open":<int>,"agent_coverage_pct":<0..1>,"avg_patch_age_days":<int>}}',
-        "key_meanings": {
-            "findings": "List of vulnerability findings",
-            "findings[].severity": "Severity (e.g., CRITICAL, HIGH)",
-            "findings[].resolved": "Boolean: has the finding been resolved",
-            "patch_status.agent_coverage_pct": "Fraction of fleet with patch agent installed (0..1)",
-            "patch_status.avg_patch_age_days": "Average days since last patch"
+            "rationale": "One critical remains open; patch agent coverage is near target with moderate patch latency.",
+            "evidence": {
+                "critical_open": 1,
+                "agent_coverage_pct": 0.90,
+                "avg_patch_age_days": 30,
+                "sla": {"critical_days": 7, "high_days": 30},
+                "scanned_assets": 403,
+                "total_assets": 420
+            },
+            "gaps": [],
+            "actions": [
+                {"priority": "P0", "action": "Patch critical CVEs on internet-exposed assets within 48 hours"},
+                {"priority": "P1", "action": "Increase patch agent coverage from 90%→95% across missing subnets"}
+            ],
+            "confidence": 0.78
         }
     }
 }
 
-
+# =========================
+# Prompt builder
+# =========================
 def build_prompt(metric_id: str, task_input: dict) -> str:
     """Generate a complete prompt for the given metric.
 
     Output format:
-    SYSTEM: ... (includes rubric)
+    SYSTEM: ... (includes universal preamble + rubric)
+    INPUT JSON KEYS AND MEANINGS: ...
+    TASK INPUT: <your JSON>
+    RESPONSE FORMAT (JSON only): ...
     EXAMPLE INPUT: ...
     EXAMPLE OUTPUT: ...
-    INPUT JSON KEYS AND MEANINGS: ...
-    TASK INPUT: <your provided JSON>
-    RESPONSE FORMAT (JSON only): ...
     """
     meta = METRIC_PROMPTS.get(metric_id)
     if not meta:
         raise ValueError(f"Unknown metric_id: {metric_id}")
 
-    # Build key meanings list
     meanings = meta.get("key_meanings", {})
     key_meanings_str = "\n".join([f"- {k}: {v}" for k, v in meanings.items()]) if meanings else ""
 
     prompt = (
         f"SYSTEM:\n{meta['system']}\n\n"
-        f"EXAMPLE INPUT:\n{json.dumps(meta['example_input'], indent=2)}\n\n"
-        f"EXAMPLE OUTPUT:\n{json.dumps(meta['example_output'], indent=2)}\n\n"
         f"INPUT JSON KEYS AND MEANINGS:\n{key_meanings_str}\n\n"
         f"TASK INPUT:\n{json.dumps(task_input, indent=2)}\n\n"
-        f"RESPONSE FORMAT (JSON only):\n{meta['response_format']}"
+        f"RESPONSE FORMAT (JSON only):\n{meta['response_format']}\n\n"
+        f"EXAMPLE INPUT:\n{json.dumps(meta['example_input'], indent=2)}\n\n"
+        f"EXAMPLE OUTPUT:\n{json.dumps(meta['example_output'], indent=2)}"
     )
     return prompt
 
 
-# Demo
-if __name__ == "__main__":
-    demo = {
-        "resources": [
-            {"id": "y", "tags": {"env": "prod", "owner": "team"}}
-        ],
-        "required_tags": ["env", "owner", "cost-center", "service"]
-    }
-    print(build_prompt("security.vuln_patch", demo))
+# # Demo
+# if __name__ == "__main__":
+#     demo = {
+#         "resources": [
+#             {"id": "y", "tags": {"env": "prod", "owner": "team"}}
+#         ],
+#         "required_tags": ["env", "owner", "cost-center", "service"],
+#         "window": "2025-07-20..2025-08-19",
+#         "sample_size": 1
+#     }
+#     print(build_prompt("tagging.coverage", demo))

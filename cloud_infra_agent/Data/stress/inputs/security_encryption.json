@@ -1,0 +1,15 @@
+{
+  "resources": [
+    {
+      "id": "vol-71",
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "lb-71",
+      "type": "load_balancer",
+      "tls_policy": "TLS1.2"
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

@@ -1,0 +1,36 @@
+{
+  "users": [
+    {
+      "name": "alice",
+      "mfa_enabled": true
+    },
+    {
+      "name": "bob",
+      "mfa_enabled": false
+    }
+  ],
+  "keys": [
+    {
+      "user": "alice",
+      "age_days": 22
+    },
+    {
+      "user": "service-user",
+      "age_days": 190
+    }
+  ],
+  "policies": [
+    {
+      "principal": "admin-group",
+      "effect": "Allow",
+      "actions": [
+        "*"
+      ],
+      "resources": [
+        "*"
+      ]
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 5
+}

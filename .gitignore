@@ -1,0 +1,8 @@
+.DS_Store
+.env
+cloned_repos
+__pycache__
+env
+repo_search_agent_optimized.py
+cloud_infra_agent/sample_data.json
+sample_data.json

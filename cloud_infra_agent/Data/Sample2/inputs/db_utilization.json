@@ -1,0 +1,20 @@
+{
+  "databases": [
+    {
+      "id": "rds-a",
+      "engine": "postgres",
+      "cpu_p95": 0.52,
+      "connections_p95": 0.61,
+      "storage_iops_p95": 0.39
+    },
+    {
+      "id": "azure-sql-1",
+      "engine": "mssql",
+      "cpu_p95": 0.12,
+      "connections_p95": 0.18,
+      "storage_iops_p95": 0.11
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

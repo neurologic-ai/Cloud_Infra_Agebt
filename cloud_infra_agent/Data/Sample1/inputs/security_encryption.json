@@ -1,0 +1,6 @@
+{
+  "resources": [
+    {"id": "vol-1", "type": "block_volume", "encrypted_at_rest": true},
+    {"id": "alb-1", "type": "load_balancer", "tls_policy": "TLS1.2-2019-Modern"}
+  ]
+}

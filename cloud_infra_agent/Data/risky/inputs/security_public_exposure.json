@@ -1,0 +1,23 @@
+{
+  "network_policies": [
+    {
+      "rule": "0.0.0.0/0:22"
+    },
+    {
+      "rule": "0.0.0.0/0:3389"
+    }
+  ],
+  "storage_acls": [
+    {
+      "public": true
+    }
+  ],
+  "inventory": [
+    {
+      "id": "i-9",
+      "public_ip": true
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

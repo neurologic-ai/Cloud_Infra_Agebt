@@ -1,0 +1,26 @@
+{
+  "cost_rows": [
+    {
+      "cloud": "aws",
+      "service": "EC2",
+      "resource_id": "i-0a1b2c",
+      "cost": 123.45,
+      "month": "2025-07",
+      "tags": {
+        "env": "prod"
+      }
+    }
+  ],
+  "instances": [
+    {
+      "id": "i-0a1b2c",
+      "cpu_p95": 0.09,
+      "mem_p95": 0.08,
+      "low_util_hours_30d": 210
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 1,
+  "total_cost_usd": 5000.0,
+  "currency": "USD"
+}

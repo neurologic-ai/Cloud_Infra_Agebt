@@ -1,0 +1,20 @@
+{
+  "cost_rows": [
+    {
+      "cost": 600,
+      "tags": {
+        "env": "prod",
+        "owner": "core"
+      }
+    },
+    {
+      "cost": 650,
+      "tags": {
+        "env": "prod",
+        "owner": "core"
+      }
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

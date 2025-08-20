@@ -1,29 +1,65 @@
-# Data_Collection_Agents/base_agent.py
 import os
 import json
 import time
 import random
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from abc import ABC
+from typing import Any, Dict, Optional
 from openai import OpenAI
 
 class BaseMicroAgent(ABC):
+    """
+    A base class for lightweight agents that interact with OpenAI's Chat Completions API.
+    Provides retry logic, JSON parsing, and configurable model/temperature.
+    """
+
     def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.0, api_key: Optional[str] = None):
+        """
+        Initialize the agent.
+
+        Args:
+            model: OpenAI model name to use (default: gpt-4o-mini).
+            temperature: Sampling temperature for output randomness.
+            api_key: Optional API key. If not provided, will use environment variable OPENAI_API_KEY.
+        """
         self._api_key = api_key
         self._client: Optional[OpenAI] = None
         self.model = model
         self.temperature = temperature
 
 
+
     def _get_client(self) -> OpenAI:
-        key = self._api_key or os.getenv("OPENAI_KEY")
+        """
+        Initialize and return an OpenAI client.
+
+        Returns:
+            OpenAI client instance.
+
+        Raises:
+            RuntimeError: If no API key is available.
+        """
+        
+        key = self._api_key or os.getenv("OPENAI_API_KEY")
         if not key:
             raise RuntimeError("OPENAI_API_KEY is not set.")
         if self._client is None:
             self._client = OpenAI(api_key=key)
         return self._client
 
+
     def _call_llm(self, prompt: str, system_prompt: str = "", max_tokens: int = 900) -> str:
+        """
+        Send a prompt to the LLM with retry logic.
+
+        Args:
+            prompt: User prompt text.
+            system_prompt: Optional system prompt for role guidance.
+            max_tokens: Maximum tokens in the response.
+
+        Returns:
+            Model response string (empty if failed).
+        """
+
         client = self._get_client()
         messages = []
         if system_prompt:
@@ -52,6 +88,17 @@ class BaseMicroAgent(ABC):
 
     @staticmethod
     def _parse_json_response(response: str) -> Dict[str, Any]:
+        """
+        Attempt to parse a model response into JSON.
+
+        Handles responses wrapped in ```json ... ``` or other code fences.
+
+        Args:
+            response: Raw string response from the LLM.
+
+        Returns:
+            Parsed JSON dict (empty if parsing fails).
+        """
         if not response:
             return {}
         try:

@@ -1,0 +1,375 @@
+{
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 5,
+      "rationale": "All resources are encrypted at rest and utilize a modern TLS policy, indicating no material risks.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls_policy": "TLS1.2-2019-Modern"
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 2,
+      "rationale": "The database 'azure-sql-1' shows critical underutilization with CPU at 0.12 and connections at 0.18, indicating material risks. 'rds-a' is performing better but still shows a need for balance across the fleet.",
+      "evidence": {
+        "low_util_count": 1,
+        "high_util_count": 0,
+        "fleet_cpu_p95_avg": 0.32
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate and optimize 'azure-sql-1' to improve utilization"
+        },
+        {
+          "priority": "P1",
+          "action": "Monitor 'rds-a' for potential spikes in connections and IOPS"
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 2,
+      "rationale": "Only 50% of resources are fully tagged, with many critical tags missing. The GCP resource lacks both 'cost-center' and 'service' tags, which poses material risks to resource management.",
+      "evidence": {
+        "coverage_pct": 0.5,
+        "missing_examples": [
+          {
+            "id": "gce-1",
+            "missing": [
+              "cost-center",
+              "service"
+            ]
+          }
+        ]
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Tag the GCP resource with 'cost-center' and 'service' tags immediately."
+        },
+        {
+          "priority": "P1",
+          "action": "Implement tagging policies to ensure all resources are tagged with required tags."
+        }
+      ],
+      "confidence": 0.7
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "The fleet shows significant idle capacity, with one instance having a very low utilization rate. Overall, 2 out of 3 instances have low utilization hours exceeding 30% of the time.",
+      "evidence": {
+        "idle_pct": 0.6667,
+        "worst_idle_hours": 210,
+        "fleet_cpu_p95": 0.3067,
+        "fleet_mem_p95": 0.2667
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Rightsize or stop idle instance 'gce-inst-1' to reduce idle capacity"
+        },
+        {
+          "priority": "P1",
+          "action": "Analyze utilization patterns of instance 'i-0a1b2c' and 'vmss-2' for potential optimization"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 4,
+      "rationale": "Latency metrics are near SLO with small spikes, and 5xx errors are rare. The unhealthy time is minimal, indicating good overall performance.",
+      "evidence": {
+        "alb-1": {
+          "p95_ms": 130,
+          "p99_ms": 260,
+          "r5xx": 0.003,
+          "unhealthy_minutes": 10,
+          "requests": 100000
+        },
+        "appgw-1": {
+          "p95_ms": 150,
+          "p99_ms": 280,
+          "r5xx": 0.004,
+          "unhealthy_minutes": 4,
+          "requests": 100000
+        }
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor latency spikes and investigate causes."
+        },
+        {
+          "priority": "P2",
+          "action": "Review and optimize load balancer configurations."
+        }
+      ],
+      "confidence": 0.85
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 2,
+      "rationale": "The autoscaler has missed the target CPU utilization significantly, with actual values exceeding the target by a considerable margin. This indicates material risks in resource management and potential performance issues.",
+      "evidence": {
+        "target_violation_pct": 36.67,
+        "events": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Increase the target CPU threshold to better align with actual usage."
+        },
+        {
+          "priority": "P1",
+          "action": "Review scaling policies to ensure timely reactions to CPU spikes."
+        },
+        {
+          "priority": "P1",
+          "action": "Implement monitoring to track CPU usage trends and adjust resources proactively."
+        }
+      ],
+      "confidence": 0.6
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 2,
+      "rationale": "There is one unattached block volume and one orphaned snapshot, indicating significant avoidable costs. Additionally, the objects in the hot storage class include a stale object from 2025, which contributes to unnecessary expenses.",
+      "evidence": {
+        "unattached": 1,
+        "orphaned_snaps": 1,
+        "hot_stale_objects": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Delete the unattached block volume."
+        },
+        {
+          "priority": "P0",
+          "action": "Delete the orphaned snapshot."
+        },
+        {
+          "priority": "P1",
+          "action": "Review and transition stale objects to a lower-cost storage class."
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 3,
+      "rationale": "Coverage is at 66.67% with some high-severity drift present; this indicates clear risks that need to be addressed to improve compliance and reduce potential vulnerabilities.",
+      "evidence": {
+        "coverage_pct": 0.6667,
+        "high_critical": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Onboard the unmanaged resource 'alb-1' to Terraform"
+        },
+        {
+          "priority": "P0",
+          "action": "Remediate the critical policy finding for 'nsg-123'"
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 2,
+      "rationale": "The idle cost represents a significant share of the total spend, with the instance showing low utilization metrics. The low utilization hours indicate material risks associated with underutilization.",
+      "evidence": {
+        "idle_cost": 123.45,
+        "idle_pct": 0.02469,
+        "total_cost": 5000.0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Stop or downsize idle instance 'i-0a1b2c'; apply off-hours schedules"
+        }
+      ],
+      "confidence": 0.85
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 4,
+      "rationale": "Coverage is at approximately 90% with around 10% unused commitments, which meets the target with minor risks.",
+      "evidence": {
+        "coverage_pct": 0.9,
+        "waste_usd": 144
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Refine commitment mix to reduce ~10% unused commitments."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 3,
+      "rationale": "There were two incidents, including one Sev1 and one Sev2, with a total MTTR of 65 minutes. Additionally, there were SLO breaches totaling 2.4 hours, indicating clear risks that need to be addressed.",
+      "evidence": {
+        "sev12_30d": 2,
+        "mttr_h": 1.08,
+        "slo_breach_hours": 2.4,
+        "slo_target": 0.995
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Conduct a root cause analysis for the Sev1 incident"
+        },
+        {
+          "priority": "P1",
+          "action": "Implement monitoring improvements to reduce SLO breach hours"
+        },
+        {
+          "priority": "P2",
+          "action": "Review incident response procedures for efficiency"
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 1,
+      "rationale": "The presence of a public SSH access rule (0.0.0.0/0:22) and a publicly accessible production bucket (ml-prod) indicates significant exposure of sensitive production assets, necessitating urgent action.",
+      "evidence": {
+        "open_fw_rules": 1,
+        "public_buckets": 1,
+        "public_ips": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Immediately restrict SSH access to corporate CIDRs, make the ml-prod bucket private, and remove public IPs from production resources."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 2,
+      "rationale": "Only 74.5% of costs are attributable due to missing tags on GCP resources, indicating material risks in cost allocation.",
+      "evidence": {
+        "attributable_pct": 0.745
+      },
+      "gaps": [
+        "Resource ID for GCP service is missing"
+      ],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Implement mandatory tagging for all cloud resources, especially for GCP"
+        },
+        {
+          "priority": "P1",
+          "action": "Audit existing resources to identify and tag untagged resources"
+        }
+      ],
+      "confidence": 0.75
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 2,
+      "rationale": "There is one critical vulnerability open, and the average patch age exceeds the target, indicating material risks. Coverage is close to the target but still below the threshold.",
+      "evidence": {
+        "critical_open": 1,
+        "agent_coverage_pct": 0.91,
+        "avg_patch_age_days": 19,
+        "scanned_assets": 110,
+        "total_assets": 120
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Patch the critical CVE (CVE-2025-0001) immediately"
+        },
+        {
+          "priority": "P1",
+          "action": "Reduce average patch age by prioritizing older patches"
+        }
+      ],
+      "confidence": 0.85
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 2,
+      "rationale": "There is one user without MFA and a key that is older than 90 days, along with a wildcard admin policy, indicating material risks.",
+      "evidence": {
+        "users_without_mfa": 1,
+        "old_keys": 1,
+        "overly_permissive_principals": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Enforce MFA for all users immediately"
+        },
+        {
+          "priority": "P0",
+          "action": "Rotate the key older than 90 days"
+        },
+        {
+          "priority": "P1",
+          "action": "Replace wildcard admin policy with least-privilege roles"
+        }
+      ],
+      "confidence": 0.8
+    }
+  }
+}

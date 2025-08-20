@@ -1,0 +1,28 @@
+{
+  "resources": [
+    {
+      "id": "i-9",
+      "tags": {
+        "env": "prod"
+      }
+    },
+    {
+      "id": "db-9",
+      "tags": {}
+    },
+    {
+      "id": "lb-9",
+      "tags": {
+        "owner": "unknown"
+      }
+    }
+  ],
+  "required_tags": [
+    "env",
+    "owner",
+    "cost-center",
+    "service"
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 3
+}

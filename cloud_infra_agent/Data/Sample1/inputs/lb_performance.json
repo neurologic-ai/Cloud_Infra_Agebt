@@ -1,0 +1,22 @@
+{
+  "load_balancers": [
+    {
+      "id": "alb-1",
+      "lat_p50": 42,
+      "lat_p95": 130,
+      "lat_p99": 260,
+      "r4xx": 0.018,
+      "r5xx": 0.003,
+      "unhealthy_minutes": 10
+    },
+    {
+      "id": "appgw-1",
+      "lat_p50": 55,
+      "lat_p95": 150,
+      "lat_p99": 280,
+      "r4xx": 0.012,
+      "r5xx": 0.004,
+      "unhealthy_minutes": 4
+    }
+  ]
+}

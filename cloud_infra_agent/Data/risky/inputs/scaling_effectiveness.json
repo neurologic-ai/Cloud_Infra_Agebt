@@ -1,0 +1,38 @@
+{
+  "ts_metrics": [
+    {
+      "ts": "2025-08-10T10:00:00Z",
+      "target_cpu": 0.6,
+      "actual_cpu": 0.95
+    },
+    {
+      "ts": "2025-08-10T10:05:00Z",
+      "target_cpu": 0.6,
+      "actual_cpu": 0.92
+    },
+    {
+      "ts": "2025-08-10T10:12:00Z",
+      "target_cpu": 0.6,
+      "actual_cpu": 0.9
+    }
+  ],
+  "scale_events": [
+    {
+      "ts": "2025-08-10T10:11:30Z",
+      "action": "scale_out",
+      "delta": 1
+    },
+    {
+      "ts": "2025-08-10T10:13:00Z",
+      "action": "scale_in",
+      "delta": -1
+    },
+    {
+      "ts": "2025-08-10T10:14:30Z",
+      "action": "scale_out",
+      "delta": 1
+    }
+  ],
+  "sample_size": 300,
+  "window": "2025-07-20..2025-08-19"
+}

@@ -1,0 +1,16 @@
+{
+  "network_policies": [],
+  "storage_acls": [],
+  "inventory": [
+    {
+      "id": "i-1",
+      "public_ip": false
+    },
+    {
+      "id": "i-2",
+      "public_ip": false
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 0
+}

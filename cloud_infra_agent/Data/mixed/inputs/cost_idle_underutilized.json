@@ -1,0 +1,28 @@
+{
+  "cost_rows": [
+    {
+      "resource_id": "i-3",
+      "cost": 220
+    },
+    {
+      "resource_id": "i-4",
+      "cost": 260
+    }
+  ],
+  "instances": [
+    {
+      "id": "i-3",
+      "cpu_p95": 0.16,
+      "mem_p95": 0.2
+    },
+    {
+      "id": "i-4",
+      "cpu_p95": 0.62,
+      "mem_p95": 0.68
+    }
+  ],
+  "total_cost_usd": 14000.0,
+  "currency": "USD",
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

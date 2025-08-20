@@ -1,0 +1,32 @@
+{
+  "users": [
+    {
+      "name": "eve",
+      "mfa_enabled": true
+    },
+    {
+      "name": "mallory",
+      "mfa_enabled": true
+    }
+  ],
+  "keys": [
+    {
+      "user": "eve",
+      "age_days": 12
+    }
+  ],
+  "policies": [
+    {
+      "principal": "core-sre",
+      "actions": [
+        "ec2:*",
+        "autoscaling:*"
+      ],
+      "resources": [
+        "*"
+      ]
+    }
+  ],
+  "window": "2025-07-20..2025-08-19",
+  "sample_size": 2
+}

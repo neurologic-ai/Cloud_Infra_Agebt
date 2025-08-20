@@ -1,0 +1,294 @@
+{
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 4,
+      "rationale": "All resources are encrypted at rest, and the load balancer uses TLS1.2, indicating good security practices with only minor risks.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls_policy": "TLS1.2"
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P2",
+          "action": "Monitor for any updates or changes in TLS policies to ensure continued compliance with modern standards."
+        }
+      ],
+      "confidence": 1.0
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 4,
+      "rationale": "Both resources are fully tagged, meeting the target for overall tagging coverage. However, the critical tags are present on both resources, indicating minor risks in the tagging strategy.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "critical_tags_pct": 1.0
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P2",
+          "action": "Regularly review tagging compliance to ensure continued adherence to standards."
+        }
+      ],
+      "confidence": 1.0
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 4,
+      "rationale": "Latency metrics are near SLO with small margins, and the 5xx error rate is rare. The unhealthy time is minimal, indicating good overall performance.",
+      "evidence": {
+        "p95_ms": 95,
+        "p99_ms": 140,
+        "r5xx": 0.001,
+        "unhealthy_minutes": 2,
+        "requests": 1500000
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor latency trends closely to ensure they remain within SLO."
+        },
+        {
+          "priority": "P2",
+          "action": "Investigate the cause of the 2 unhealthy minutes to prevent recurrence."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 4,
+      "rationale": "The majority of instances are operating within the target CPU and memory utilization range, with only minor low-utilization outliers. However, there are still some instances that could be optimized further.",
+      "evidence": {
+        "instances_in_target": 2,
+        "total_instances": 2,
+        "low_util_hours": 10,
+        "low_util_pct": 0.25
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor and analyze the low-utilization hours to identify potential optimizations."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 4,
+      "rationale": "The databases are operating within acceptable CPU utilization levels, with both showing p95 values between 0.57 and 0.61. Connections are also balanced, indicating minor risks but overall good performance.",
+      "evidence": {
+        "cpu_p95": {
+          "db-1": 0.61,
+          "db-2": 0.57
+        },
+        "connections_p95": {
+          "db-1": 0.52,
+          "db-2": 0.49
+        }
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor for any potential spikes in CPU or connections to ensure they remain balanced."
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 2,
+      "rationale": "The autoscaler reacted with a delay of over 1 minute and had a significant target violation of 25% during the observed period, indicating material risks in performance. The actual CPU usage exceeded the target significantly at times, suggesting a need for immediate attention.",
+      "evidence": {
+        "median_reaction_s": 60,
+        "target_violation_pct": 25,
+        "thrash_rate": 0.0,
+        "events": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate the cause of the high CPU usage and adjust scaling policies accordingly."
+        },
+        {
+          "priority": "P1",
+          "action": "Implement more aggressive scaling thresholds to prevent future violations."
+        },
+        {
+          "priority": "P2",
+          "action": "Monitor CPU usage closely for the next week to assess the effectiveness of changes."
+        }
+      ],
+      "confidence": 0.6
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 5,
+      "rationale": "All block volumes are attached, and there are no orphaned snapshots or stale hot data. This indicates efficient use of storage resources with no obvious waste.",
+      "evidence": {
+        "attached_volumes": 1,
+        "orphaned_snaps": 0,
+        "hot_stale_objects": 0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 5,
+      "rationale": "All resources in the inventory are managed by Infrastructure as Code (IaC), with no policy findings indicating drift. This indicates excellent coverage and no material risks.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "high_critical": 0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 5,
+      "rationale": "All costs are attributable to the 'prod' environment and 'platform' owner, indicating excellent tagging practices.",
+      "evidence": {
+        "attributable_pct": 1.0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 4,
+      "rationale": "Coverage is approximately 95% with less than 5% unused commitments, indicating good resource utilization.",
+      "evidence": {
+        "coverage_pct": 0.95,
+        "unused_commitment_pct": 0.014
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Monitor usage trends to maintain optimal commitment levels."
+        }
+      ],
+      "confidence": 1.0
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 5,
+      "rationale": "There are no public buckets or public IPs, indicating excellent security posture with no material risks.",
+      "evidence": {
+        "open_fw_rules": 0,
+        "public_buckets": 0,
+        "public_ips": 0
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 5,
+      "rationale": "There are no incidents or SLO breaches reported, indicating excellent performance in availability.",
+      "evidence": {
+        "sev12_30d": 0,
+        "mttr_h": 0,
+        "slo_breach_hours": 0,
+        "slo_target": 0.995
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 5,
+      "rationale": "The patch agent coverage is excellent at 96%, and the average patch age is well below the target at 9 days, with no critical vulnerabilities open.",
+      "evidence": {
+        "agent_coverage_pct": 0.96,
+        "avg_patch_age_days": 9,
+        "critical_open": 0,
+        "scanned_assets": 215,
+        "total_assets": 220
+      },
+      "gaps": [],
+      "actions": [],
+      "confidence": 1.0
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 4,
+      "rationale": "All users have MFA enabled and there are no keys older than 90 days. However, there is a permissive policy that could be tightened.",
+      "evidence": {
+        "users_without_mfa": 0,
+        "old_keys": 0,
+        "overly_permissive_principals": 1
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Review and restrict permissions for the dev-role policy"
+        }
+      ],
+      "confidence": 0.9
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 3,
+      "rationale": "The idle cost represents a significant portion of the total spend, indicating clear risks related to resource utilization. With a total cost of $12,000 and idle costs of $420, the idle percentage is approximately 3.5%, which is near the target range.",
+      "evidence": {
+        "idle_cost": 420,
+        "idle_pct": 0.035,
+        "total_cost": 12000
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Analyze and optimize the utilization of instances 'i-1' and 'i-2' to reduce idle costs."
+        },
+        {
+          "priority": "P2",
+          "action": "Implement monitoring tools to track resource utilization trends over time."
+        }
+      ],
+      "confidence": 0.85
+    }
+  }
+}
