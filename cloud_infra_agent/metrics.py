@@ -63,6 +63,12 @@ METRIC_PROMPTS = {
             ],
             "required_tags": ["env", "owner", "cost-center", "service"]
         },
+        "input_key_meanings": {
+            "resources": "List of resources to evaluate",
+            "resources[].id": "Unique resource identifier",
+            "resources[].tags": "Key/value tags on the resource",
+            "required_tags": "Array of tag keys that are mandatory for full coverage"
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "tagging.coverage",
@@ -91,6 +97,13 @@ METRIC_PROMPTS = {
                 {"id": "a", "cpu_p95": 0.55, "mem_p95": 0.6, "low_util_hours_30d": 5},
                 {"id": "b", "cpu_p95": 0.1,  "mem_p95": 0.2, "low_util_hours_30d": 200}
             ]
+        },
+        "input_key_meanings": {
+            "instances": "List of compute instances",
+            "instances[].id": "Instance identifier",
+            "instances[].cpu_p95": "95th percentile CPU utilization (0..1)",
+            "instances[].mem_p95": "95th percentile memory utilization (0..1)",
+            "instances[].low_util_hours_30d": "Hours in last 30d where instance was below low-util threshold"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -121,6 +134,13 @@ METRIC_PROMPTS = {
             "binpack_efficiency": 0.82,
             "pending_pods_p95": 1
         },
+        "input_key_meanings": {
+            "nodes.cpu_p95": "Aggregated 95th percentile node CPU utilization (0..1)",
+            "nodes.mem_p95": "Aggregated 95th percentile node memory utilization (0..1)",
+            "pods.cpu_req_vs_used": "Ratio of requested to actually used CPU (0..1)",
+            "binpack_efficiency": "Packing/fragmentation efficiency (0..1)",
+            "pending_pods_p95": "95th percentile of pending pods count"
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "k8s.utilization",
@@ -150,8 +170,16 @@ METRIC_PROMPTS = {
                 {"ts": "t2", "target_cpu": 0.6, "actual_cpu": 0.61}
             ],
             "scale_events": [{"ts": "t1", "action": "scale_out", "delta": 1}],
-            "window": "2025-08-10T12:00Z..2025-08-10T14:00Z",
-            "sample_size": 240
+        },
+        "input_key_meanings": {
+            "ts_metrics": "Time series of target vs actual metric (e.g., CPU)",
+            "ts_metrics[].ts": "Timestamp or sequence marker",
+            "ts_metrics[].target_cpu": "Autoscaler target (0..1)",
+            "ts_metrics[].actual_cpu": "Observed utilization (0..1)",
+            "scale_events": "List of scaling actions",
+            "scale_events[].ts": "Timestamp of the scaling action",
+            "scale_events[].action": "Action type (scale_out/scale_in)",
+            "scale_events[].delta": "Change in replica count or capacity"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -161,9 +189,7 @@ METRIC_PROMPTS = {
             "evidence": {"median_reaction_s": 60, "target_violation_pct": 0.10, "thrash_rate": 0.0, "events": 1},
             "gaps": [],
             "actions": [{"priority": "P2", "action": "Tighten cooldown only if future thrash appears; currently acceptable"}],
-            "confidence": 0.8,
-            "window": "2025-08-10T12:00Z..2025-08-10T14:00Z",
-            "sample_size": 240
+            "confidence": 0.8
         }
     },
 
@@ -182,9 +208,13 @@ METRIC_PROMPTS = {
             "databases": [
                 {"id": "a", "cpu_p95": 0.6, "connections_p95": 0.5},
                 {"id": "b", "cpu_p95": 0.1, "connections_p95": 0.1}
-            ],
-            "window": "2025-07-20..2025-08-19",
-            "sample_size": 2
+            ]
+        },
+        "input_key_meanings": {
+            "databases": "List of database instances",
+            "databases[].id": "Database identifier",
+            "databases[].cpu_p95": "95th percentile CPU utilization (0..1)",
+            "databases[].connections_p95": "95th percentile connection load (0..1)"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -194,9 +224,7 @@ METRIC_PROMPTS = {
             "evidence": {"low_util_count": 1, "high_util_count": 0, "fleet_cpu_p95_avg": 0.35},
             "gaps": [],
             "actions": [{"priority": "P1", "action": "Downsize or consolidate idle DB 'b'; validate connection limits"}],
-            "confidence": 0.82,
-            "window": "2025-07-20..2025-08-19",
-            "sample_size": 2
+            "confidence": 0.82
         }
     },
 
@@ -216,6 +244,17 @@ METRIC_PROMPTS = {
                 {"id": "alb-1", "lat_p95": 130, "lat_p99": 260, "r5xx": 0.003, "unhealthy_minutes": 2, "requests": 1200000}
             ],
             "slo": {"p95_ms": 200, "p99_ms": 400, "5xx_rate_max": 0.005}
+        },
+        "input_key_meanings": {
+            "load_balancers": "List of LBs with health/latency/5xx metrics",
+            "load_balancers[].id": "Load balancer identifier",
+            "load_balancers[].lat_p95": "p95 latency in ms",
+            "load_balancers[].lat_p99": "p99 latency in ms",
+            "load_balancers[].r5xx": "5xx error rate (0..1)",
+            "load_balancers[].unhealthy_minutes": "Minutes marked unhealthy",
+            "slo.p95_ms": "SLO threshold for p95 latency",
+            "slo.p99_ms": "SLO threshold for p99 latency",
+            "slo.5xx_rate_max": "Maximum acceptable 5xx rate"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -245,6 +284,16 @@ METRIC_PROMPTS = {
             "snapshots": [{"id": "s", "source_volume": None}],
             "objects": [{"storage_class": "STANDARD", "last_modified": "2024-01-01T00:00:00Z"}]
         },
+         "input_key_meanings": {
+            "block_volumes": "List of block volumes and their attachment state",
+            "block_volumes[].id": "Volume identifier",
+            "block_volumes[].attached": "Boolean attachment flag",
+            "snapshots": "List of snapshots and their source volume linkage",
+            "snapshots[].source_volume": "Volume ID if snapshot has a valid source, else null",
+            "objects": "Object storage items",
+            "objects[].storage_class": "Storage tier/class",
+            "objects[].last_modified": "Timestamp of last modification/access"
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "storage.efficiency",
@@ -273,6 +322,13 @@ METRIC_PROMPTS = {
             "iac_index": {"a": True, "b": False},
             "policy_findings": [{"severity": "high"}]
         },
+        "input_key_meanings": {
+            "inventory": "List of resources in scope",
+            "inventory[].id": "Resource identifier",
+            "iac_index": "Map of resource id → whether managed by IaC",
+            "policy_findings": "List of drift/security/policy issues",
+            "policy_findings[].severity": "Severity level (e.g., high, critical)"
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "iac.coverage_drift",
@@ -300,6 +356,17 @@ METRIC_PROMPTS = {
             "incidents": [{"sev": 2, "opened": "t0", "resolved": "t1"}],
             "slo_breaches": [{"hours": 1.0}],
             "slo": {"objective": "availability", "target": 0.995}
+        },
+        "input_key_meanings": {
+            "incidents": "Array of incident records in the scoring window",
+            "incidents[].sev": "Severity level (1=critical, 2=major, 3=minor, etc.)",
+            "incidents[].opened": "Timestamp when incident started (ISO 8601 recommended)",
+            "incidents[].resolved": "Timestamp when incident was resolved (same format)",
+            "slo_breaches": "Array of SLO violations observed",
+            "slo_breaches[].hours": "Total hours of breach for that occurrence",
+            "slo": "Definition of the service-level objective applied",
+            "slo.objective": "The type of objective (e.g., 'availability', 'latency')",
+            "slo.target": "Numerical target for compliance (e.g., 0.995 = 99.5%)"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -334,6 +401,15 @@ METRIC_PROMPTS = {
                 {"id": "b", "cpu_p95": 0.6,  "mem_p95": 0.5}
             ]
         },
+        "input_key_meanings": {
+            "cost_rows": "List of resource-level cost entries",
+            "cost_rows[].resource_id": "ID matching an instance or resource",
+            "cost_rows[].cost": "Cost amount (currency units)",
+            "instances": "List of instances with utilization",
+            "instances[].id": "Instance identifier",
+            "instances[].cpu_p95": "95th percentile CPU (0..1)",
+            "instances[].mem_p95": "95th percentile memory (0..1)"
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "cost.idle_underutilized",
@@ -360,6 +436,13 @@ METRIC_PROMPTS = {
         "example_input": {
             "commit_inventory": [{"commit_usd_hour": 2.0}],
             "usage": [{"used_usd_hour": 1.8, "hours": 720}]
+        },
+        "input_key_meanings": {
+            "commit_inventory": "List of commitment SKUs/terms",
+            "commit_inventory[].commit_usd_hour": "Hourly committed spend capacity",
+            "usage": "List of usage entries for coverage calc",
+            "usage[].used_usd_hour": "Hourly spend that was actually used",
+            "usage[].hours": "Hours in the period"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -388,13 +471,18 @@ METRIC_PROMPTS = {
             "- 4: 90-94% costs attributable\n"
             "- 3: 75-89% costs attributable\n"
             "- 2: 50-74% costs attributable\n"
-            "- 1: <50%"
+            "- 1: <50% costs attributable"
         ),
         "example_input": {
             "cost_rows": [
                 {"cost": 100, "tags": {"env": "prod", "owner": "search"}},
                 {"cost": 100, "tags": {}}
             ]
+        },
+        "input_key_meanings": {
+            "cost_rows": "List of cost line items",
+            "cost_rows[].cost": "Cost amount (currency units)",
+            "cost_rows[].tags": "Tag dictionary on the cost row used for attribution"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -423,6 +511,20 @@ METRIC_PROMPTS = {
             "network_policies": [{"rule": "0.0.0.0/0:22"}],
             "storage_acls": [{"bucket": "ml-prod", "public": True}],
             "inventory": [{"id": "i-9zzz", "public_ip": True}]
+        },
+        "input_key_meanings": {
+            "network_policies": "Array of ingress/SG/firewall rules in scope.",
+            "network_policies[].rule": "CIDR:port or CIDR:port-range (e.g., '0.0.0.0/0:22', '0.0.0.0/0:80-443').",
+            "network_policies[].proto": "Optional protocol (e.g., 'tcp', 'udp'); default tcp if omitted.",
+            "network_policies[].env": "Optional environment tag (e.g., 'prod', 'dev') for risk weighting.",
+            "storage_acls": "Array of object-storage ACLs/policies evaluated for public access.",
+            "storage_acls[].bucket": "Bucket/container identifier.",
+            "storage_acls[].public": "Boolean — true if bucket/objects are publicly listable or readable.",
+            "storage_acls[].exception_approved": "Optional boolean — true if a documented exception exists.",
+            "inventory": "Array of assets with exposure attributes.",
+            "inventory[].id": "Asset identifier (instance, LB, etc.).",
+            "inventory[].public_ip": "Boolean — true if asset has a routable public IP.",
+            "inventory[].sensitive": "Optional boolean — true if asset handles prod/PII/regulated data."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -453,6 +555,13 @@ METRIC_PROMPTS = {
                 {"id": "alb-1", "type": "load_balancer", "tls_policy": "TLS1.2-2019-Modern"}
             ]
         },
+        "input_key_meanings": {
+            "resources": "Array of storage or network resources to check for encryption/TLS compliance.",
+            "resources[].id": "Unique identifier for the resource (volume ID, LB name, etc.).",
+            "resources[].type": "Type of resource (e.g., 'block_volume', 'object_bucket', 'load_balancer').",
+            "resources[].encrypted_at_rest": "Boolean — true if data is encrypted at rest (for storage resources).",
+            "resources[].tls_policy": "String — TLS/SSL security policy enforced on endpoints (e.g., 'TLS1.2-2019-Modern')."
+        },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.encryption",
@@ -480,6 +589,17 @@ METRIC_PROMPTS = {
             "users": [{"name": "a","mfa_enabled": False}],
             "keys": [{ "user": "user","age_days": 120}],
             "policies": [{"actions": ["*"], "resources": ["*"]}]
+        },
+        "input_key_meanings": {
+            "users": "Array of IAM user accounts in scope.",
+            "users[].name": "Username or identifier.",
+            "users[].mfa_enabled": "Boolean — true if MFA is enabled.",
+            "keys": "Array of IAM access keys or service keys.",
+            "keys[].user": "User or service account the key belongs to.",
+            "keys[].age_days": "Age of the key in days; rotation expected <90 days.",
+            "policies": "Array of IAM policies being evaluated.",
+            "policies[].actions": "List of actions permitted (e.g., ['ec2:*'] or ['*']).",
+            "policies[].resources": "List of resources covered (e.g., ['*'] = overly permissive)."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -509,8 +629,26 @@ METRIC_PROMPTS = {
         ),
         "example_input": {
             "findings": [{"severity": "CRITICAL", "resolved": False}],
-            "patch_status": {"agent_coverage_pct": 0.9, "avg_patch_age_days": 30, "sla": {"critical_days": 7, "high_days": 30}},
-            "denominators": {"total_assets": 420, "scanned_assets": 403},
+            "patch_status": {
+                "agent_coverage_pct": 0.9,
+                "avg_patch_age_days": 30,
+                "sla": {"critical_days": 7, "high_days": 30}
+            },
+            "denominators": {"total_assets": 420, "scanned_assets": 403}
+        },
+        "input_key_meanings": {
+            "findings": "Array of vulnerability findings in scope.",
+            "findings[].severity": "Severity of the finding (CRITICAL, HIGH, MEDIUM, LOW).",
+            "findings[].resolved": "Boolean — true if already remediated.",
+            "patch_status": "Summary of patch coverage/latency metrics.",
+            "patch_status.agent_coverage_pct": "Fraction of assets with patch agent reporting (0.0–1.0).",
+            "patch_status.avg_patch_age_days": "Average age (in days) of applied patches since release.",
+            "patch_status.sla": "Patch SLAs for different severity classes.",
+            "patch_status.sla.critical_days": "Expected days to patch critical vulns.",
+            "patch_status.sla.high_days": "Expected days to patch high vulns.",
+            "denominators": "Reference counts for normalization.",
+            "denominators.total_assets": "Total assets in environment.",
+            "denominators.scanned_assets": "Number of assets successfully scanned/covered by agents."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
@@ -533,7 +671,8 @@ METRIC_PROMPTS = {
             "confidence": 0.78
         }
     }
-}
+    }
+
 
 # =========================
 # Prompt builder
@@ -553,7 +692,7 @@ def build_prompt(metric_id: str, task_input: dict) -> str:
     if not meta:
         raise ValueError(f"Unknown metric_id: {metric_id}")
 
-    meanings = meta.get("key_meanings", {})
+    meanings = meta.get("input_key_meanings", {})
     key_meanings_str = "\n".join([f"- {k}: {v}" for k, v in meanings.items()]) if meanings else ""
 
     prompt = (
@@ -573,8 +712,6 @@ def build_prompt(metric_id: str, task_input: dict) -> str:
 #         "resources": [
 #             {"id": "y", "tags": {"env": "prod", "owner": "team"}}
 #         ],
-#         "required_tags": ["env", "owner", "cost-center", "service"],
-#         "window": "2025-07-20..2025-08-19",
-#         "sample_size": 1
+#         "required_tags": ["env", "owner", "cost-center", "service"]
 #     }
 #     print(build_prompt("tagging.coverage", demo))
