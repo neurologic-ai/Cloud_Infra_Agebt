@@ -72,9 +72,13 @@ def run_metrics_threaded(
 
 def run_cli(sample_name: str, max_workers=6):
     output_path = Path(f"cloud_infra_agent/Data/{sample_name}/output.json")
+    output_path = Path(f"cloud_infra_agent/Data/{sample_name}/scaling_effectiveness.json")
+    metric = [
+        "scaling.effectiveness"
+    ]
 
     results, errors = run_metrics_threaded(
-        sample_name=sample_name, max_workers=max_workers
+        metric, sample_name=sample_name, max_workers=max_workers
     )
 
     # organize output

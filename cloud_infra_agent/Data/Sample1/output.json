@@ -13,60 +13,32 @@
       "confidence": 1.0
     }
   },
-  "compute.utilization": {
+  "scaling.effectiveness": {
     "llm_output": {
-      "metric_id": "compute.utilization",
-      "score": 2,
-      "rationale": "The fleet shows significant idle capacity, with two instances having low utilization for a majority of the last 30 days. Specifically, 66.67% of instances are below the low-util threshold for a considerable number of hours.",
+      "metric_id": "scaling.effectiveness",
+      "score": 4,
+      "rationale": "The autoscaler reacted within 1 minute with a minor target violation of 8.33% and no thrash observed. The actual CPU utilization briefly exceeded the target but was addressed with a scaling action.",
       "evidence": {
-        "idle_pct": 0.6667,
-        "worst_idle_hours": 210,
-        "fleet_cpu_p95": 0.297,
-        "fleet_mem_p95": 0.26
+        "median_reaction_s": 120,
+        "target_violation_pct": 8.33,
+        "thrash_rate": 0.0,
+        "events": 1
       },
       "gaps": [],
       "actions": [
         {
-          "priority": "P0",
-          "action": "Rightsize or stop idle instance 'gce-inst-1' and 'i-0a1b2c'"
-        },
-        {
           "priority": "P1",
-          "action": "Monitor utilization trends and adjust scaling policies accordingly"
+          "action": "Monitor for further violations and adjust scaling thresholds if necessary."
         }
       ],
-      "confidence": 0.8
-    }
-  },
-  "db.utilization": {
-    "llm_output": {
-      "metric_id": "db.utilization",
-      "score": 2,
-      "rationale": "The fleet exhibits significant CPU underutilization in 'azure-sql-1' with a p95 of 0.12, indicating a recurring bottleneck. 'rds-a' is within acceptable limits, but the overall performance is dragged down by the low utilization of the other instance.",
-      "evidence": {
-        "low_util_count": 1,
-        "high_util_count": 0,
-        "fleet_cpu_p95_avg": 0.32
-      },
-      "gaps": [],
-      "actions": [
-        {
-          "priority": "P0",
-          "action": "Investigate and optimize 'azure-sql-1' to increase utilization or consider downsizing"
-        },
-        {
-          "priority": "P1",
-          "action": "Monitor connection loads and IOPS for both databases to ensure balanced performance"
-        }
-      ],
-      "confidence": 0.75
+      "confidence": 0.9
     }
   },
   "tagging.coverage": {
     "llm_output": {
       "metric_id": "tagging.coverage",
       "score": 2,
-      "rationale": "Only 50% of resources are fully tagged, with many critical tags missing. The GCP resource lacks both 'cost-center' and 'service' tags, which poses material risks in resource allocation and ownership clarity.",
+      "rationale": "Only 50% of resources are fully tagged, with many critical tags missing. The GCP resource lacks both 'cost-center' and 'service' tags, which poses material risks in resource management.",
       "evidence": {
         "coverage_pct": 0.5,
         "missing_examples": [
@@ -83,46 +55,70 @@
       "actions": [
         {
           "priority": "P0",
-          "action": "Tag the GCP resource with 'cost-center' and 'service' tags immediately."
+          "action": "Tag the GCP resource with 'cost-center' and 'service' tags immediately"
         },
         {
           "priority": "P1",
-          "action": "Implement a tagging policy to ensure all resources have required tags."
+          "action": "Implement tagging policies to ensure all resources are tagged correctly"
         }
       ],
       "confidence": 0.7
     }
   },
-  "scaling.effectiveness": {
+  "compute.utilization": {
     "llm_output": {
-      "metric_id": "scaling.effectiveness",
-      "score": 3,
-      "rationale": "The autoscaler reacted within 2 minutes, but there was a target violation of 36.67% during the first measurement, indicating clear risks to address. The scaling action occurred just before the second measurement, suggesting some level of thrash.",
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "The fleet shows significant idle capacity, with two instances having low utilization for a substantial number of hours. The overall percentage of instances operating within the target utilization range is low.",
       "evidence": {
-        "median_reaction_s": 120,
-        "target_violation_pct": 36.67,
-        "thrash_rate": 100.0,
-        "events": 1
+        "idle_pct": 0.6667,
+        "worst_idle_hours": 210,
+        "fleet_cpu_p95": 0.2967,
+        "fleet_mem_p95": 0.26
       },
       "gaps": [],
       "actions": [
         {
           "priority": "P0",
-          "action": "Review scaling thresholds to reduce target violations"
+          "action": "Rightsize or stop idle instance 'gce-inst-1' and 'i-0a1b2c'"
         },
         {
           "priority": "P1",
-          "action": "Analyze scaling event timing to minimize thrash"
+          "action": "Implement monitoring and alerts for low utilization instances"
         }
       ],
-      "confidence": 0.7
+      "confidence": 0.8
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 2,
+      "rationale": "The fleet exhibits significant CPU underutilization with one database consistently below the target threshold, indicating material risks. The other database is within acceptable limits but shows a potential for imbalance in connections and IOPS.",
+      "evidence": {
+        "low_util_count": 1,
+        "high_util_count": 1,
+        "fleet_cpu_p95_avg": 0.32
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P0",
+          "action": "Investigate and optimize the configuration of 'azure-sql-1' to increase CPU utilization."
+        },
+        {
+          "priority": "P1",
+          "action": "Monitor connection and IOPS usage on both databases to identify potential bottlenecks."
+        }
+      ],
+      "confidence": 0.75
     }
   },
   "lb.performance": {
     "llm_output": {
       "metric_id": "lb.performance",
       "score": 3,
-      "rationale": "Both load balancers show p95 and p99 latencies near the SLO thresholds, with some unhealthy time and elevated 5xx rates. The error rates are close to the maximum acceptable limit, indicating clear risks that need to be addressed.",
+      "rationale": "Both load balancers show p95 and p99 latencies near the SLO thresholds, with occasional 5xx errors. The unhealthy minutes indicate some instability that needs addressing.",
       "evidence": {
         "alb-1": {
           "p95_ms": 130,
@@ -145,16 +141,16 @@
       "gaps": [],
       "actions": [
         {
-          "priority": "P0",
+          "priority": "P1",
           "action": "Investigate and resolve the causes of unhealthy minutes."
         },
         {
           "priority": "P1",
-          "action": "Monitor latency trends closely to prevent SLO breaches."
+          "action": "Monitor latency trends to prevent future SLO breaches."
         },
         {
-          "priority": "P1",
-          "action": "Review and optimize application performance to reduce latency."
+          "priority": "P2",
+          "action": "Review and optimize load balancer configurations."
         }
       ],
       "confidence": 0.75
@@ -164,7 +160,7 @@
     "llm_output": {
       "metric_id": "storage.efficiency",
       "score": 3,
-      "rationale": "There is one unattached block volume and one orphaned snapshot, indicating noticeable but not severe waste. The object storage contains items that are not stale but are in the standard tier, which may not be the most cost-effective option.",
+      "rationale": "There is one unattached block volume and one orphaned snapshot, indicating noticeable but not severe waste. The object storage contains items that are not stale, but the presence of unattached resources suggests clear risks to address.",
       "evidence": {
         "unattached": 1,
         "orphaned_snaps": 1,
@@ -174,11 +170,30 @@
       "actions": [
         {
           "priority": "P1",
-          "action": "Delete the orphaned snapshot; consider reattaching or removing the unattached volume."
+          "action": "Delete the orphaned snapshot and evaluate the unattached volume for reattachment or deletion."
+        }
+      ],
+      "confidence": 0.8
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 3,
+      "rationale": "Coverage is approximately 78% with about 15% unused commitments, indicating clear risks to address.",
+      "evidence": {
+        "coverage_pct": 0.78,
+        "unused_commitment_pct": 0.15
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Evaluate and adjust commitments to improve coverage towards target."
         },
         {
           "priority": "P2",
-          "action": "Review object storage for potential lifecycle policies to transition to lower-cost storage classes."
+          "action": "Monitor usage trends to align future commitments more closely with actual usage."
         }
       ],
       "confidence": 0.8
@@ -197,11 +212,11 @@
       "actions": [
         {
           "priority": "P0",
-          "action": "Remediate critical policy finding related to 'nsg_no_any_any'"
+          "action": "Remediate critical policy finding for noncompliant NSG"
         },
         {
           "priority": "P0",
-          "action": "Remediate high policy finding related to 'no_public_ip_vm'"
+          "action": "Remediate high policy finding for noncompliant VM"
         },
         {
           "priority": "P1",
@@ -211,37 +226,34 @@
       "confidence": 0.7
     }
   },
-  "cost.commit_coverage": {
+  "cost.idle_underutilized": {
     "llm_output": {
-      "metric_id": "cost.commit_coverage",
-      "score": 3,
-      "rationale": "Coverage is at approximately 78% with about 15% unused commitments, indicating clear risks to address.",
+      "metric_id": "cost.idle_underutilized",
+      "score": 2,
+      "rationale": "The instance 'i-0a1b2c' shows low utilization with a 95th percentile CPU usage of 0.09 and memory usage of 0.08, indicating significant idle resources. The total cost of $123.45 suggests that idle costs are material, leading to a score of poor.",
       "evidence": {
-        "coverage_pct": 0.78,
-        "unused_commitment_pct": 0.15
+        "idle_cost": 123.45,
+        "idle_pct": 0.5,
+        "total_cost": 123.45
       },
       "gaps": [],
       "actions": [
         {
-          "priority": "P1",
-          "action": "Evaluate and adjust commitments to improve coverage towards target."
-        },
-        {
-          "priority": "P2",
-          "action": "Monitor usage trends to better align future commitments."
+          "priority": "P0",
+          "action": "Stop or downsize instance 'i-0a1b2c' to reduce idle costs."
         }
       ],
-      "confidence": 0.8
+      "confidence": 0.85
     }
   },
   "availability.incidents": {
     "llm_output": {
       "metric_id": "availability.incidents",
       "score": 2,
-      "rationale": "There is one critical incident (Sev1) and one major incident (Sev2) with a total MTTR of 1 hour and 5 minutes. Additionally, there is a significant SLO breach of 2.4 hours, indicating material risks.",
+      "rationale": "There are two incidents, including one critical Sev1 and one major Sev2, with a total MTTR of 1 hour and 5 minutes. Additionally, there is a significant SLO breach of 2.4 hours, indicating material risks to service reliability.",
       "evidence": {
         "sev12_30d": 2,
-        "mttr_h": 1.08,
+        "mttr_h": 1.0833333333333333,
         "slo_breach_hours": 2.4,
         "slo_target": 0.995
       },
@@ -253,11 +265,15 @@
         },
         {
           "priority": "P1",
-          "action": "Implement measures to reduce the duration of SLO breaches."
+          "action": "Implement immediate fixes to address the issues leading to the Sev2 incident."
         },
         {
           "priority": "P1",
-          "action": "Review incident response procedures to improve MTTR."
+          "action": "Review SLO compliance and adjust monitoring thresholds."
+        },
+        {
+          "priority": "P2",
+          "action": "Enhance incident response training for the team."
         }
       ],
       "confidence": 0.75
@@ -267,7 +283,7 @@
     "llm_output": {
       "metric_id": "cost.allocation_quality",
       "score": 2,
-      "rationale": "Only 74.5% of costs are attributable due to missing tags on some cost rows, indicating material risks in cost attribution.",
+      "rationale": "Only 74.5% of costs are attributable due to missing tags on GCP costs, which presents material risks in cost allocation.",
       "evidence": {
         "attributable_pct": 0.745
       },
@@ -275,41 +291,21 @@
       "actions": [
         {
           "priority": "P0",
-          "action": "Implement mandatory tagging policies for all cost items"
+          "action": "Implement mandatory tagging policies for all cloud resources to ensure full cost attribution."
         },
         {
           "priority": "P1",
-          "action": "Audit existing cost rows to identify and tag missing entries"
+          "action": "Audit existing resources to identify and tag untagged costs."
         }
       ],
       "confidence": 0.8
     }
   },
-  "cost.idle_underutilized": {
-    "llm_output": {
-      "metric_id": "cost.idle_underutilized",
-      "score": 2,
-      "rationale": "The instance 'i-0a1b2c' shows low utilization with a 95th percentile CPU of 0.09 and memory of 0.08, indicating significant idle resources. This results in a material risk of wasted spend.",
-      "evidence": {
-        "idle_cost": 123.45,
-        "idle_pct": 0.5,
-        "total_cost": 123.45
-      },
-      "gaps": [],
-      "actions": [
-        {
-          "priority": "P0",
-          "action": "Stop or downsize instance 'i-0a1b2c' to reduce idle spend"
-        }
-      ],
-      "confidence": 0.85
-    }
-  },
   "security.public_exposure": {
     "llm_output": {
       "metric_id": "security.public_exposure",
-      "score": 2,
-      "rationale": "The presence of a public SSH access rule and a publicly accessible bucket indicates multiple unnecessary exposures, which pose material risks to the environment.",
+      "score": 1,
+      "rationale": "There is widespread exposure of sensitive production assets, including public SSH access and a publicly accessible bucket, which poses significant risks.",
       "evidence": {
         "open_fw_rules": 1,
         "public_buckets": 1,
@@ -319,10 +315,10 @@
       "actions": [
         {
           "priority": "P0",
-          "action": "Restrict SSH access to specific IP ranges and make the bucket private."
+          "action": "Restrict SSH access to corporate CIDRs; make the 'ml-prod' bucket private; remove public IPs from sensitive assets"
         }
       ],
-      "confidence": 0.9
+      "confidence": 0.85
     }
   },
   "security.iam_risk": {
@@ -357,7 +353,7 @@
     "llm_output": {
       "metric_id": "security.vuln_patch",
       "score": 2,
-      "rationale": "There is one critical vulnerability open, and the average patch age exceeds the target threshold. Coverage is slightly below the required level, indicating material risks.",
+      "rationale": "There is one critical vulnerability open, and the average patch age exceeds the target threshold. Coverage is acceptable but not optimal.",
       "evidence": {
         "critical_open": 1,
         "agent_coverage_pct": 0.91,
@@ -369,18 +365,14 @@
       "actions": [
         {
           "priority": "P0",
-          "action": "Remediate the open critical vulnerability immediately."
+          "action": "Remediate the open critical vulnerability immediately"
         },
         {
           "priority": "P1",
-          "action": "Reduce average patch age by prioritizing patches older than 14 days."
-        },
-        {
-          "priority": "P2",
-          "action": "Increase patch agent coverage to at least 95%."
+          "action": "Reduce average patch age by prioritizing patches older than 14 days"
         }
       ],
-      "confidence": 0.7
+      "confidence": 0.85
     }
   }
 }

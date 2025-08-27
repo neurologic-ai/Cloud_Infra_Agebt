@@ -1,109 +1,187 @@
-# CloudInfraAgent
+# Cloud Infrastructure Agent
 
-**CloudInfraAgent** is a modular framework for assessing cloud infrastructure across **FinOps, security, scaling, availability, and utilization**.  
-It ingests JSON inputs, an **LLM** for consistent scoring (1–5).  
+This project implements a **Cloud Infrastructure Assessment Agent**. It uses a backbone of
+LLM-powered metric evaluators combined with an orchestrator layer and workflows to compute
+a weighted overall score for cloud environments.
 
-
----
-
-## 📂 Project Structure
-
-```
-cloud_infra_agent/
-├── main.py                  # Entry point for running agent
-├── base_agents.py           # Base classes for agent orchestration     
-├── call_llm_.py             # LLM call wrappers
-├── compute_functions.py     # Functions for metric computation
-├── config.py                # Configurations and constants
-├── metric_input_loader.py   # Load JSON inputs for metrics
-├── metrics.py               # Metric registry and prompts
-├── utility_functions.py     # Shared helpers (aggregation, scoring, utils)
-└── Data/
-    └── Sample2/
-        ├── inputs/          # Input JSONs per metric
-        └── output.json      # Generated output
-```
+The agent can run individual or multiple metrics, automatically resolve dependencies,
+and produce structured outputs validated against schemas. Final reports are saved to JSON
+for traceability and analysis.
 
 ---
 
-## 🚀 Features
+## 📐 Architecture
 
-- **Multi-domain Metric Coverage**  
-  - Tagging coverage  
-  - Compute utilization  
-  - Database and load balancer metrics  
-  - Kubernetes efficiency  
-  - Scaling effectiveness  
-  - Cost allocation, idle/waste tracking  
-  - IAM risks, vulnerabilities, CSPM findings  
+The repo is organized into three layers:
 
-- **LLM Scoring**  
-  **LLM-powered reasoning** for structured outputs.
+- **`agent_layer/`** — Orchestrator layer
+  - Metric registry (`registry.py`)
+  - Schemas & validation (`schemas.py`, `validate.py`)
+  - Loader for backbone metric functions (`tool_loader.py`)
+  - Router (`router.py`)
 
-- **Pluggable Design**  
-  Add new metrics by extending `DEFAULT_METRICS` in `config.py` and mapping them in `metrics.py`.
+- **`cloud_infra_agent/`** — Backbone layer
+  - Implements the actual metric scoring logic (`metrics.py`)
+  - Utilities for calling LLMs (`call_llm_.py`, `base_agents.py`)
+  - Sample input/output data (`Data/Sample2/inputs`)
 
-- **Sample Datasets**  
-  Ready-to-run JSONs included in `Data/Sample2/inputs`.
+- **`workflows/`** — Assembly layer
+  - Defines workflows that tie metrics together, e.g. `monitor_workflow.py`
+
+- **`app/`** — API layer
+  - FastAPI application (`main.py`) to expose the agent over HTTP
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Setup
 
-```bash
-git clone <your-repo-url>
-python3 -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+1. **Python Version**
+   - Requires Python 3.9+ (tested on 3.11/3.12).
 
-Set environment variables (via `.env`):
+2. **Clone & Install**
+   ```bash
+   git clone <this-repo>
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-```env
-GOOGLE_GENAI_USE_VERTEXAI=FALSE
-GOOGLE_API_KEY=your-google-key
-OPENAI_KEY=your-openai-key
+3. # ===============================
+# Cloud Infrastructure Agent ENV
+# ===============================
 CLOUD_INFRA_DATA_DIR=cloud_infra_agent/Data
-```
+LLM_PROVIDER=openai          # options: openai | google
+
+OPENAI_API_KEY=sk-proj-xxxxxxx   # put your real key here
+OPENAI_MODEL=gpt-4o-mini         # e.g. gpt-4o-mini, gpt-4-turbo
+
+GOOGLE_GENAI_USE_VERTEXAI=FALSE  # set TRUE if using Vertex AI
+GOOGLE_API_KEY=                  # your Google Generative AI API key
+GOOGLE_MODEL=gemini-1.5-flash    # e.g. gemini-1.5-flash, gemini-pro
+
+# --- Backbone ---
+# Where to import metric functions from
+# Example: cloud_infra_agent.agent_wrappers
+BACKBONE_MODULE=cloud_infra_agent.agent_wrappers
+
+DEFAULT_PLATFORM=aws             # aws | azure | gcp
+
+
 
 ---
 
-## ▶️ Usage
+## 🚀 Usage
 
-### Run with Sample Data
+### Run via FastAPI
 
+Start the server:
 ```bash
-python -m cloud_infra_agent.main <sample_data_folder_name>
+uvicorn agent.app.main:app --reload
 ```
 
-This will:
-1. Load mappings from `Data/<sample_data_folder_name>/inputs/`
-2. Ccall LLM for scoring
-3. Generate structured output (`output.json`)
+### Inputs
+
+cfg = {
+    "metrics": "all",                   # or a list like ["score_compute_utilization"]
+    "output_path": "./runs/result.json" # optional; default is ./runs/run-<ts>.json
+}
+ctx = {
+    "score_compute_utilization": {"params": {"cpu": 0.7}},
+    # other per-metric params can go here
+}
 
 
 ---
 
-## 📊 Example Input → Output
+## 🎯 Metric Selection
 
-### Input (`Data/Sample2/inputs/tagging_coverage.json`)
+- **All metrics (default)**  
+  `config["metrics"] = "all"` or omit the key.
 
+- **Single metric (L0)**  
+  `config["metrics"] = "score_compute_utilization"`
+
+- **Dependent metric (L1)**  
+  `config["metrics"] = ["score_cost_allocation_quality"]`  
+  → automatically includes `score_tagging_coverage` as its dependency.
+
+- **Multiple metrics**  
+  `config["metrics"] = ["score_k8s_utilization", "score_autoscaling_effectiveness"]`
+
+---
+
+## 🎯 Metric Input Modes
+
+Each metric can be provided inputs in three ways:
+
+- **ADirect Parameters (params)** 
+
+  ctx = {
+    "score_compute_utilization": {
+      "params": {"cpu": 0.7, "memory": 0.5}
+    }
+  }
+
+
+- **ASample Data (sample_name)** 
+
+  ctx = {
+    "score_compute_utilization": {
+      "sample_name": "Sample3"
+    }
+  }
+
+
+→ loads cloud_infra_agent/Data/Sample3/inputs/compute.utilization.json
+
+- **AFallback (Default Sample)** 
+
+  ctx = {}
+
+
+  → defaults to "Sample2"
+
+
+## 💾 JSON Output
+
+- By default, results are saved under `./runs/run-<timestamp>.json`
+- Or specify your own file with `config["output_path"]`
+
+Example saved file:
 ```json
 {
-  "resources": [
-    {"id": "i-0a1b2c", "tags": {"env": "prod", "owner": "ml-team"}}
-  ],
-  "required_tags": ["env", "owner", "cost-center", "service"]
+  "metrics": {
+    "score_compute_utilization": {...},
+    "score_k8s_utilization": {...}
+  },
+  "summary": {
+    "overall_score": 3.7,
+    "category_scores": {"cost": 3.2, "efficiency": 4.1, ...}
+  }
 }
 ```
 
-### LLM Evaluation Output
+---
 
-```json
-{
-  "metric_id": "tagging.coverage",
-  "score": 3,
-  "rationale": "85% resources have required tags."
-}
+## 📊 Data & Samples
+
+Sample inputs are stored in `cloud_infra_agent/Data/Sample2/inputs/`.
+
+Each metric has a JSON input file, e.g.:
+- `compute_utilization.json`
+- `security_iam_risk.json`
+
+These can be used for testing the workflow without live data.
+
+
+## 📂 Directory Structure
+
+```
+
+  ├── agent_layer/       # Orchestrator (schemas, registry, loader, validate)
+  ├── app/               # FastAPI entrypoint
+  ├── cloud_infra_agent/ # Backbone (metrics, LLM calls, data)
+  ├── workflows/         # Workflow definitions
+  └── README.md          # This file
 ```
 

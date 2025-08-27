@@ -1,0 +1,34 @@
+{
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 3,
+      "rationale": "The reaction time was 40 seconds, which is acceptable, but the violation rate was 10%, indicating clear risks. There was no thrash, but the delta error was significant, suggesting that the applied scaling did not adequately address the initial breach.",
+      "evidence": {
+        "median_reaction_s": 40,
+        "target_violation_pct": 10.0,
+        "thrash_rate": 0.0,
+        "delta_error_pct": 20.0,
+        "events": 2,
+        "total_samples": 20,
+        "violating_samples": 2,
+        "first_breach_ts": "2025-08-10T12:00:00Z",
+        "first_corrective_ts": "2025-08-10T12:00:40Z",
+        "needed_delta": 3,
+        "applied_delta": 5
+      },
+      "gaps": [],
+      "actions": [
+        {
+          "priority": "P1",
+          "action": "Review scaling policies to ensure they are aligned with actual traffic patterns."
+        },
+        {
+          "priority": "P1",
+          "action": "Analyze the delta applied during the breach to improve future scaling decisions."
+        }
+      ],
+      "confidence": 0.9
+    }
+  }
+}

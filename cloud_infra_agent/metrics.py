@@ -1,4 +1,5 @@
 import json
+from loguru import logger
 
 """
 Metric Prompt Builder (optimized for Cloud Infra Agent)
@@ -22,7 +23,8 @@ UNIVERSAL_PREAMBLE = (
     "- Use only provided data. If required inputs are missing, list them in 'gaps', reduce 'confidence', and adjust the score downward.\n"
     "- Prefer normalized rates (0..1), p95/p99, and denominators. Cite exact numbers under 'evidence'.\n"
     "- Keep actions concrete (≤5), prioritized (P0/P1/P2), and focused on the next step.\n"
-    "- Return ONLY the specified JSON. No extra text."
+    "- Return ONLY the specified JSON. No extra text.\n"
+    "- Do NOT reuse numbers from EXAMPLE OUTPUT; recompute everything from TASK INPUT."
 )
 
 UNIVERSAL_RESPONSE_FORMAT = (
@@ -157,19 +159,52 @@ METRIC_PROMPTS = {
     "scaling.effectiveness": {
         "system": (
             f"{UNIVERSAL_PREAMBLE}\n\n"
-            "RUBRIC (reaction, target adherence, thrash):\n"
-            "- 5: Reaction <1 min; <5% target violations; thrash <5%\n"
-            "- 4: Reaction 1-2 min; 5-10% violations; thrash <10%\n"
-            "- 3: Reaction 2-5 min; 10-20% violations; mild thrash\n"
-            "- 2: Reaction 5-10 min; >20% violations; frequent thrash\n"
-            "- 1: Reaction >10 min; sustained violations; severe thrash"
+            "RUBRIC (reaction, target adherence, thrash, delta adequacy):\n"
+            "- 5: Reaction median <1 min; violations <5%; thrash <5%; delta error <10%\n"
+            "- 4: Reaction median 1-2 min; violations 5-10%; thrash <10%; delta error 10-20%\n"
+            "- 3: Reaction median 2-5 min; violations 10-20%; thrash <20% (mild); delta error 20-35%\n"
+            "- 2: Reaction median 5-10 min; violations 20-35%; thrash 20-35% (frequent); delta error 35-60%\n"
+            "- 1: Reaction median >10 min; violations >35%; thrash >35% (severe); delta error >60%\n\n"
+
+            "DEFINITIONS (using only provided inputs):\n"
+            "- Preprocessing: sort ts_metrics by ts ascending; sort scale_events by ts ascending.\n"
+            "- Target violation: |actual_cpu - target_cpu| / target_cpu > 0.05 (STRICT '>'). "
+            "Violation rate = (#violating samples / #ts_metrics) * 100.\n"
+            "- Reaction time: Identify each breach start (a violating sample whose previous sample is non-violating or absent). "
+            "Reaction for a breach = seconds from breach start to the first corrective scale_event (scale_out if actual>target, scale_in if actual<target). "
+            "If no corrective event occurs after breach start, use 601s for that breach. Use the MEDIAN across breaches (if 1 breach, use that value).\n"
+            "- Thrash: Consider ADJACENT scale_events only. A flip occurs when direction changes (out->in or in->out) AND the time delta between those two events is <300 seconds (STRICT '<'). "
+            "Thrash % = (flips / total_events) * 100. If total_events < 2, thrash = 0%.\n"
+            "- Delta adequacy (error%): For the FIRST breach only, let ratio = actual/target at breach start; needed_delta ~= round((ratio - 1) * 10). "
+            "For under-target breaches, needed_delta is negative. Find the first corrective event at/after breach start in the corrective direction. "
+            "If none, error = 100%. Else error% = abs(|applied_delta| - |needed_delta|) / max(1, |needed_delta|) * 100.\n\n"
+
+            "SCORING STEPS (deterministic):\n"
+            "1) Compute violation %, reaction median (seconds), thrash %, delta_error % exactly as defined.\n"
+            "2) Map each to tiers per the RUBRIC; average the four tiers equally; round to nearest integer (0.5 rounds up).\n"
+            "3) Populate 'evidence' with: median_reaction_s, target_violation_pct, thrash_rate, delta_error_pct, events, total_samples, violating_samples, first_breach_ts, first_corrective_ts, needed_delta, applied_delta.\n"
+            "4) First compute internally; then return ONLY the final JSON.\n\n"
+
+            "SANITY CHECKS (must pass):\n"
+            "- If any corrective event exists <600s after breach start, median_reaction_s MUST be <600.\n"
+            "- A sample at exactly 5% deviation is NOT a violation.\n"
+            "- A reversal at exactly 5 minutes is NOT thrash (must be strictly <300s).\n"
+            "- target_violation_pct == (violating_samples / total_samples) * 100 (round to 2 decimals).\n"
+            "- If |applied_delta| == |needed_delta|, then delta_error_pct == 0.\n"
+            "- total_samples == len(ts_metrics) and events == len(scale_events).\n\n"
+
+            "===== NON-AUTHORITATIVE EXAMPLE (DO NOT COPY NUMBERS) =====\n"
         ),
         "example_input": {
             "ts_metrics": [
-                {"ts": "t0", "target_cpu": 0.6, "actual_cpu": 0.9},
-                {"ts": "t2", "target_cpu": 0.6, "actual_cpu": 0.61}
+                {"ts": "2025-08-10T12:00:00Z", "target_cpu": 0.6, "actual_cpu": 0.9},
+                {"ts": "2025-08-10T12:01:00Z", "target_cpu": 0.6, "actual_cpu": 0.62},
+                {"ts": "2025-08-10T12:02:00Z", "target_cpu": 0.6, "actual_cpu": 0.60}
             ],
-            "scale_events": [{"ts": "t1", "action": "scale_out", "delta": 1}],
+            "scale_events": [
+                {"ts": "2025-08-10T12:00:40Z", "action": "scale_out", "delta": 5},
+                {"ts": "2025-08-10T12:11:00Z", "action": "scale_in", "delta": 1}
+            ]
         },
         "input_key_meanings": {
             "ts_metrics": "Time series of target vs actual metric (e.g., CPU)",
@@ -182,16 +217,35 @@ METRIC_PROMPTS = {
             "scale_events[].delta": "Change in replica count or capacity"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
+
+        # Use a GOOD-CASE example to avoid anchoring wrong numbers.
         "example_output": {
             "metric_id": "scaling.effectiveness",
-            "score": 4,
-            "rationale": "Autoscaler reacted within ~1 minute with brief target violation and no oscillation.",
-            "evidence": {"median_reaction_s": 60, "target_violation_pct": 0.10, "thrash_rate": 0.0, "events": 1},
+            "score": 5,
+            "rationale": "Very fast reaction (~40s), violation rate under 5%, no thrash, and delta matched the overload.",
+            "evidence": {
+                "median_reaction_s": 40,
+                "target_violation_pct": 4.76,
+                "thrash_rate": 0.0,
+                "delta_error_pct": 0.0,
+                "events": 2,
+                "total_samples": 3,
+                "violating_samples": 1,
+                "first_breach_ts": "2025-08-10T12:00:00Z",
+                "first_corrective_ts": "2025-08-10T12:00:40Z",
+                "needed_delta": 5,
+                "applied_delta": 5
+            },
             "gaps": [],
-            "actions": [{"priority": "P2", "action": "Tighten cooldown only if future thrash appears; currently acceptable"}],
+            "actions": [
+                {"priority": "P2", "action": "Maintain current step sizing; monitor for oscillation under changing traffic patterns."}
+            ],
             "confidence": 0.8
         }
     },
+
+
+
 
     # 5) DB utilization
     "db.utilization": {
@@ -641,7 +695,7 @@ METRIC_PROMPTS = {
             "findings[].severity": "Severity of the finding (CRITICAL, HIGH, MEDIUM, LOW).",
             "findings[].resolved": "Boolean — true if already remediated.",
             "patch_status": "Summary of patch coverage/latency metrics.",
-            "patch_status.agent_coverage_pct": "Fraction of assets with patch agent reporting (0.0–1.0).",
+            "patch_status.agent_coverage_pct": "Fraction of assets with patch agent reporting (0.0-1.0).",
             "patch_status.avg_patch_age_days": "Average age (in days) of applied patches since release.",
             "patch_status.sla": "Patch SLAs for different severity classes.",
             "patch_status.sla.critical_days": "Expected days to patch critical vulns.",
@@ -703,6 +757,7 @@ def build_prompt(metric_id: str, task_input: dict) -> str:
         f"EXAMPLE INPUT:\n{json.dumps(meta['example_input'], indent=2)}\n\n"
         f"EXAMPLE OUTPUT:\n{json.dumps(meta['example_output'], indent=2)}"
     )
+    logger.debug(prompt)
     return prompt
 
 
