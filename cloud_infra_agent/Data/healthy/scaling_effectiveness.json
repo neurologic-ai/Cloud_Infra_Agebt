@@ -1,0 +1,256 @@
+{
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 5,
+      "rationale": "All storage resources are encrypted at rest and all network endpoints enforce a modern TLS 1.2+ policy. There are no material risks identified based on the provided data.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "legacy_tls_endpoints": 0
+      },
+      "gaps": [
+        "1. Confirm that all future resources maintain encryption and modern TLS policies"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 5,
+      "rationale": "All 4 resources are fully tagged with all required tags, including the critical 'env' and 'owner' tags. There are no material risks related to tagging coverage.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "critical_tags_present_pct": 1.0,
+        "missing_examples": []
+      },
+      "gaps": [],
+      "confidence": 1.0
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 5,
+      "rationale": "The load balancer's p95 (120ms) and p99 (240ms) latencies are well below SLO thresholds (200ms and 400ms, respectively), and the 5xx error rate (0.002) is less than half the maximum allowed (0.005). Only 1 minute was unhealthy out of a large request volume, indicating strong reliability.",
+      "evidence": {
+        "breaches": 0,
+        "worst_lb": "alb-1",
+        "p95_ms": 120,
+        "p99_ms": 240,
+        "r5xx": 0.002,
+        "requests": 1800000
+      },
+      "gaps": [
+        "1. Continue monitoring for latency and 5xx spikes; review SLOs quarterly"
+      ],
+      "confidence": 0.9
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 5,
+      "rationale": "All 4 instances (100%) have both CPU and memory p95 utilization within the 40-70% target range, and low-utilization hours are minimal. There are no material risks or outliers, indicating excellent fleet efficiency.",
+      "evidence": {
+        "in_target_pct": 1.0,
+        "low_util_outlier_pct": 0.0,
+        "fleet_cpu_p95_avg": 0.525,
+        "fleet_mem_p95_avg": 0.5425,
+        "max_low_util_hours_30d": 6
+      },
+      "gaps": [
+        "1. Continue monitoring utilization trends to ensure ongoing efficiency"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 5,
+      "rationale": "Both databases operate within the optimal CPU range (47%-58%) and show balanced connection loads (53%-61%). There are no signs of over- or under-utilization, and no material risks are evident.",
+      "evidence": {
+        "fleet_cpu_p95_avg": 0.525,
+        "fleet_connections_p95_avg": 0.57,
+        "low_util_count": 0,
+        "high_util_count": 0
+      },
+      "gaps": [
+        "1. Collect IOPS (input/output operations per second) data to confirm full resource balance"
+      ],
+      "confidence": 0.93
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 5,
+      "rationale": "All resources (4/4) are managed by IaC, and there are no reported drift or policy findings. This meets the highest standard for coverage and drift severity.",
+      "evidence": {
+        "coverage_pct": 1.0,
+        "high_critical": 0
+      },
+      "gaps": [
+        "1. Periodically review for new unmanaged resources or emerging drift"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 4,
+      "rationale": "The system reacted in 35 seconds to the only breach, with a violation rate of 33.33%. No thrash was observed and the scale step matched the estimated need. However, the violation rate is above the ideal threshold, indicating some risk.",
+      "evidence": {
+        "median_reaction_s": 35,
+        "target_violation_pct": 33.33,
+        "thrash_rate": 0.0,
+        "delta_error_pct": 0.0,
+        "events": 2,
+        "total_samples": 3,
+        "violating_samples": 1,
+        "first_breach_ts": "2025-08-10T12:00:00Z",
+        "first_corrective_ts": "2025-08-10T12:00:35Z",
+        "needed_delta": 5,
+        "applied_delta": 5
+      },
+      "gaps": [
+        "1. Increase monitoring frequency or sample count to better assess violation rates and long-term stability",
+        "2. Review why violation rate is high despite fast reaction; consider if target threshold is too tight or if more granular scaling is needed"
+      ],
+      "confidence": 0.7
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 5,
+      "rationale": "All block volumes are attached, all snapshots are linked to valid source volumes, and the only object is in INTELLIGENT_TIERING, which automatically manages hot/cold transitions. There is no evidence of orphaned, unattached, or stale hot data waste.",
+      "evidence": {
+        "unattached": 0,
+        "orphaned_snaps": 0,
+        "hot_stale_objects": 0
+      },
+      "gaps": [],
+      "confidence": 1.0
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 5,
+      "rationale": "No Sev1 or Sev2 incidents and no SLO breaches were reported in the scoring window, indicating excellent operational performance. There is no evidence of downtime or risk to availability objectives.",
+      "evidence": {
+        "sev12_30d": 0,
+        "mttr_h": 0,
+        "slo_breach_hours": 0,
+        "slo_target": 0.999
+      },
+      "gaps": [
+        "1. Confirm monitoring coverage and reporting completeness to ensure no incidents or breaches were missed"
+      ],
+      "confidence": 0.95
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 5,
+      "rationale": "No instances meet the idle criteria (cpu_p95 and mem_p95 both <0.1), so idle spend is 0% of total. All resources are utilized above idle thresholds, indicating excellent efficiency.",
+      "evidence": {
+        "idle_cost": 0,
+        "idle_pct": 0.0,
+        "total_cost": 1500
+      },
+      "gaps": [
+        "1. Periodically review utilization thresholds to ensure idle detection remains accurate"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 5,
+      "rationale": "Commitment coverage is 97% with only 3% unused commitment, which exceeds the target and presents no material risks. This indicates excellent alignment between committed and actual usage.",
+      "evidence": {
+        "coverage_pct": 0.97,
+        "waste_usd": 2.16
+      },
+      "gaps": [
+        "1. Continue monitoring usage trends to maintain high coverage and low waste"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 5,
+      "rationale": "All cost rows have both 'env' and 'owner' tags, allowing for 100% cost attribution. There are no material risks to allocation quality based on the provided data.",
+      "evidence": {
+        "total_cost": 2000,
+        "attributable_cost": 2000,
+        "attributable_pct": 1.0
+      },
+      "gaps": [],
+      "confidence": 1.0
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 5,
+      "rationale": "All users have MFA enabled, no access keys are older than 90 days, and there are no wildcard admin policies present. The only wildcard resource is for a read-only action, which does not pose a material risk.",
+      "evidence": {
+        "users_without_mfa": 0,
+        "old_keys": 0,
+        "overly_permissive_principals": 0
+      },
+      "gaps": [
+        "1. Periodically review policies for least-privilege adherence, even for read-only actions"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 5,
+      "rationale": "Patch agent coverage is 97%, exceeding the 95% target. Average patch age is 10 days, well below the 14-day threshold. No open critical vulnerabilities are present, and all findings are resolved. This indicates excellent vulnerability and patch management with no material risks.",
+      "evidence": {
+        "critical_open": 0,
+        "agent_coverage_pct": 0.97,
+        "avg_patch_age_days": 10,
+        "sla": {
+          "critical_days": 7,
+          "high_days": 30
+        },
+        "scanned_assets": 495,
+        "total_assets": 500
+      },
+      "gaps": [
+        "1. Continue monitoring for new critical vulnerabilities and maintain patching cadence"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 5,
+      "rationale": "No public buckets are present, no firewall rules allow 0.0.0.0/0 access, and no assets have public IPs. The only ingress rule is restricted to a specific corporate CIDR for SSH in production, which is a best practice.",
+      "evidence": {
+        "open_fw_rules": 0,
+        "public_buckets": 0,
+        "public_ips": 0
+      },
+      "gaps": [
+        "1. Periodically review network policies and storage ACLs to ensure no drift toward public exposure",
+        "2. Validate that exception processes are documented for any future public access needs"
+      ],
+      "confidence": 1.0
+    }
+  }
+}

@@ -49,7 +49,7 @@ CLOUD_INFRA_DATA_DIR = os.getenv("CLOUD_INFRA_DATA_DIR")
 DEFAULT_METRICS = [
     "tagging.coverage",
     "compute.utilization",
-    "security.encryption",
+    "k8s.utilization",
     "scaling.effectiveness",
     "db.utilization",
     "lb.performance",

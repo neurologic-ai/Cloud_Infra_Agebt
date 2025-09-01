@@ -1,34 +1,335 @@
 {
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 5,
+      "rationale": "All resources are compliant: the block volume is encrypted at rest and the load balancer enforces a modern TLS 1.2 policy. There are no material risks or gaps identified based on the provided data.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls1.2+_endpoints": 1,
+        "legacy_tls_endpoints": 0
+      },
+      "gaps": [
+        "1. Confirm all future resources maintain encryption and modern TLS policies"
+      ],
+      "confidence": 1.0
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 3,
+      "rationale": "One database (rds-a) operates in the optimal CPU and connection range, but the other (azure-sql-1) is underutilized with low CPU (0.12) and connections (0.18). This indicates a clear imbalance in resource usage across the fleet.",
+      "evidence": {
+        "rds-a_cpu_p95": 0.52,
+        "rds-a_connections_p95": 0.61,
+        "rds-a_storage_iops_p95": 0.39,
+        "azure-sql-1_cpu_p95": 0.12,
+        "azure-sql-1_connections_p95": 0.18,
+        "azure-sql-1_storage_iops_p95": 0.11,
+        "fleet_cpu_p95_avg": 0.32,
+        "idle_db_count": 1,
+        "balanced_db_count": 1
+      },
+      "gaps": [
+        "1. Review sizing and workload placement for underutilized DB 'azure-sql-1' to reduce waste or consolidate workloads"
+      ],
+      "confidence": 0.85
+    }
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "Only one out of three instances (33%) is within the target 40-70% CPU/mem utilization range, while two instances (67%) are low-utilization outliers with high idle hours. This indicates material underutilization and inefficiency in the fleet.",
+      "evidence": {
+        "in_target_pct": 0.33,
+        "low_util_pct": 0.67,
+        "worst_idle_hours": 210,
+        "fleet_cpu_p95": 0.306,
+        "fleet_mem_p95": 0.266
+      },
+      "gaps": [
+        "1. Investigate and rightsize or decommission idle instances 'i-0a1b2c' and 'gce-inst-1'.",
+        "2. Review workload scheduling to reduce persistent low utilization.",
+        "3. Confirm if low-util threshold aligns with business requirements."
+      ],
+      "confidence": 0.95
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 2,
+      "rationale": "Only 0% of resources are fully tagged with all required tags. Critical tags (env, owner) are missing on most resources, including the only production resource, which lacks the owner tag. This presents material risks for accountability and cost tracking.",
+      "evidence": {
+        "coverage_pct": 0.0,
+        "critical_tag_coverage": {
+          "env": 0.333,
+          "owner": 0.333
+        },
+        "prod_missing_critical": [
+          {
+            "id": "r1",
+            "missing": [
+              "owner"
+            ]
+          }
+        ],
+        "missing_examples": [
+          {
+            "id": "r1",
+            "missing": [
+              "owner",
+              "cost-center",
+              "service"
+            ]
+          },
+          {
+            "id": "r2",
+            "missing": [
+              "env",
+              "owner",
+              "cost-center",
+              "service"
+            ]
+          },
+          {
+            "id": "r3",
+            "missing": [
+              "env",
+              "cost-center",
+              "service"
+            ]
+          }
+        ]
+      },
+      "gaps": [
+        "1. Implement mandatory tagging policies for env, owner, cost-center, and service.",
+        "2. Update existing resources to include all required tags, especially owner on production resources.",
+        "3. Integrate tag checks into CI/CD pipelines to prevent untagged resources."
+      ],
+      "confidence": 0.9
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 2,
+      "rationale": "There is one unattached block volume, one orphaned snapshot, and at least one object in hot storage that appears stale, indicating significant avoidable cost. These issues suggest material waste across multiple storage types.",
+      "evidence": {
+        "unattached": 1,
+        "orphaned_snaps": 1,
+        "hot_stale_objects": 1
+      },
+      "gaps": [
+        "1. Delete orphaned snapshots (snap-1)",
+        "2. Reattach or remove unattached block volume (vol-1)",
+        "3. Review and migrate stale hot-tier object (archive/2024/01/01.parquet) to a colder storage class"
+      ],
+      "confidence": 0.85
+    }
+  },
+  "lb.performance": {
+    "llm_output": {
+      "metric_id": "lb.performance",
+      "score": 3,
+      "rationale": "SLO thresholds for latency and 5xx error rates are missing, so it is not possible to determine if the observed p95/p99 latencies (130-280ms) and 5xx rates (0.003-0.004) are within acceptable limits. Both load balancers had some unhealthy minutes (10 and 4), which may indicate periodic instability. The lack of SLO data is a material gap and reduces confidence in the assessment.",
+      "evidence": {
+        "alb-1": {
+          "lat_p95": 130,
+          "lat_p99": 260,
+          "r5xx": 0.003,
+          "unhealthy_minutes": 10
+        },
+        "appgw-1": {
+          "lat_p95": 150,
+          "lat_p99": 280,
+          "r5xx": 0.004,
+          "unhealthy_minutes": 4
+        }
+      },
+      "gaps": [
+        "1. SLO thresholds for p95/p99 latency and 5xx error rate are missing; obtain and compare against observed metrics.",
+        "2. Investigate causes of unhealthy minutes for both load balancers.",
+        "3. Review error and latency trends over time to identify patterns or spikes."
+      ],
+      "confidence": 0.45
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 3,
+      "rationale": "IaC coverage is 66.7%, which is below target, and there are high and critical severity drift findings present. This indicates material risks that need to be addressed.",
+      "evidence": {
+        "coverage_pct": 0.6667,
+        "high_critical": 2,
+        "total_resources": 3,
+        "iac_managed": 2
+      },
+      "gaps": [
+        "1. Onboard alb-1 to IaC management",
+        "2. Investigate and remediate high and critical severity drift findings"
+      ],
+      "confidence": 0.9
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 2,
+      "rationale": "Idle resources represent a significant portion of total spend, as the only instance is underutilized (cpu_p95=0.09, mem_p95=0.08) and accounts for all costs. This indicates material risks and missed optimization opportunities.",
+      "evidence": {
+        "idle_cost": 123.45,
+        "idle_pct": 1.0,
+        "total_cost": 123.45
+      },
+      "gaps": [
+        "1. Review and rightsize or terminate instance 'i-0a1b2c' due to low utilization",
+        "2. Implement automated scheduling or scaling for similar workloads",
+        "3. Confirm if any business requirement justifies persistent low utilization"
+      ],
+      "confidence": 0.85
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 2,
+      "rationale": "There was one Sev1 and one Sev2 incident in the period, both with MTTRs above 1 hour. The Sev1 incident had an MTTR of 1.08h and the Sev2 incident had an MTTR of 1.75h, with a total of 2.4 hours of SLO breach. This indicates frequent and severe incidents with material risks to reliability.",
+      "evidence": {
+        "sev1_30d": 1,
+        "sev2_30d": 1,
+        "mttr_h": 1.42,
+        "slo_breach_hours": 2.4
+      },
+      "gaps": [
+        "1. Confirm if additional incidents or SLO breaches occurred outside the provided data window.",
+        "2. Review root causes for Sev1/2 incidents and implement corrective actions.",
+        "3. Assess if SLO target and breach hours are within acceptable business risk.",
+        "4. Validate incident response processes to reduce MTTR."
+      ],
+      "confidence": 0.7
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 3,
+      "rationale": "Overall commitment coverage is 81.7%, with 18.3% of committed spend unused. This is near target but presents clear risks due to underutilization, especially on GCP. Optimization is needed to reduce waste and improve coverage.",
+      "evidence": {
+        "total_commit_usd_hour": 3.5,
+        "total_used_usd_hour": 2.9,
+        "coverage_pct": 0.817,
+        "unused_commitment_pct": 0.183,
+        "waste_usd": 432
+      },
+      "gaps": [
+        "1. Analyze GCP n1-standard commitment sizing; 26.7% unused ($0.4/hr) indicates overcommitment.",
+        "2. Review AWS compute usage patterns to ensure sustained coverage and avoid future underutilization.",
+        "3. Consider rightsizing or rescheduling commitments at renewal to better match actual usage."
+      ],
+      "confidence": 1.0
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 2,
+      "rationale": "Only 123.45 out of 165.55 total cost (74.6%) is attributable via tags, as the GCP cost row lacks any tags. This presents a material risk to cost attribution and transparency.",
+      "evidence": {
+        "total_cost": 165.55,
+        "attributable_cost": 123.45,
+        "attributable_pct": 0.746
+      },
+      "gaps": [
+        "1. Require tagging (e.g., owner, env) on all GCP cost rows and backfill missing tags for existing resources"
+      ],
+      "confidence": 0.75
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 2,
+      "rationale": "There are significant IAM risks: one user lacks MFA, a service account key is over 90 days old, and a wildcard admin policy is present. These issues expose the environment to material risks and require prompt remediation.",
+      "evidence": {
+        "users_without_mfa": 1,
+        "total_users": 2,
+        "old_keys": 1,
+        "total_keys": 2,
+        "wildcard_admin_policies": 1
+      },
+      "gaps": [
+        "1. Enforce MFA for all users, including 'bob'",
+        "2. Rotate or remove the 190-day-old key for 'service-user'",
+        "3. Replace wildcard admin policy with least-privilege permissions"
+      ],
+      "confidence": 0.85
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 3,
+      "rationale": "There is one unresolved critical vulnerability, which is a significant risk. Patch agent coverage is 91%, meeting the minimum for 'Good', and average patch age is 19 days, within the 21-day threshold. However, the presence of an open critical finding lowers the score.",
+      "evidence": {
+        "critical_open": 1,
+        "agent_coverage_pct": 0.91,
+        "avg_patch_age_days": 19,
+        "scanned_assets": 23,
+        "total_assets": 40
+      },
+      "gaps": [
+        "1. Remediate the open critical vulnerability (CVE-2025-0001) immediately, prioritizing internet-exposed assets",
+        "2. Increase scanned asset coverage from 23/40 (57.5%) to at least 90% to ensure full environment visibility",
+        "3. Raise patch agent coverage from 91% to 95% to meet best practice"
+      ],
+      "confidence": 0.65
+    }
+  },
   "scaling.effectiveness": {
     "llm_output": {
       "metric_id": "scaling.effectiveness",
-      "score": 3,
-      "rationale": "The reaction time was 40 seconds, which is acceptable, but the violation rate was 10%, indicating clear risks. There was no thrash, but the delta error was significant, suggesting that the applied scaling did not adequately address the initial breach.",
+      "score": 5,
+      "rationale": "The system reacted to the only breach in 40 seconds, well under the 1-minute threshold. Only 1 out of 21 samples violated the target (4.76%), with no thrash and a perfect delta match. All metrics are in the 'excellent' tier, indicating robust and responsive autoscaling.",
       "evidence": {
         "median_reaction_s": 40,
-        "target_violation_pct": 10.0,
+        "target_violation_pct": 4.76,
         "thrash_rate": 0.0,
-        "delta_error_pct": 20.0,
+        "delta_error_pct": 0.0,
         "events": 2,
-        "total_samples": 20,
-        "violating_samples": 2,
+        "total_samples": 21,
+        "violating_samples": 1,
         "first_breach_ts": "2025-08-10T12:00:00Z",
         "first_corrective_ts": "2025-08-10T12:00:40Z",
-        "needed_delta": 3,
+        "needed_delta": 5,
         "applied_delta": 5
       },
-      "gaps": [],
-      "actions": [
-        {
-          "priority": "P1",
-          "action": "Review scaling policies to ensure they are aligned with actual traffic patterns."
-        },
-        {
-          "priority": "P1",
-          "action": "Analyze the delta applied during the breach to improve future scaling decisions."
-        }
+      "gaps": [
+        "1. Continue monitoring for new traffic patterns or longer-term drifts that could introduce new risks"
       ],
-      "confidence": 0.9
+      "confidence": 1.0
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 2,
+      "rationale": "There is a security group allowing SSH (port 22) from 0.0.0.0/0, a public S3 bucket, and an asset with a public IP. These exposures present material risks, especially if the bucket or asset is production or sensitive.",
+      "evidence": {
+        "open_fw_rules": 1,
+        "public_buckets": 1,
+        "public_ips": 1
+      },
+      "gaps": [
+        "1. No environment or sensitivity tags for the bucket or network rule; clarify if these are production or handle sensitive data",
+        "2. Restrict SSH (22) access to trusted IP ranges",
+        "3. Make the public bucket private or apply least-privilege ACLs",
+        "4. Remove public IPs from assets unless strictly necessary"
+      ],
+      "confidence": 0.8
     }
   }
 }

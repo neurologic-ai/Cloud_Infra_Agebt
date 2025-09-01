@@ -2,20 +2,16 @@
   "load_balancers": [
     {
       "id": "alb-1",
-      "lat_p50": 40,
-      "lat_p95": 95,
-      "lat_p99": 140,
-      "r4xx": 0.012,
-      "r5xx": 0.001,
-      "unhealthy_minutes": 2,
-      "requests": 1500000
+      "lat_p95": 120,
+      "lat_p99": 240,
+      "r5xx": 0.002,
+      "unhealthy_minutes": 1,
+      "requests": 1800000
     }
   ],
   "slo": {
-    "p95_ms": 150,
-    "p99_ms": 300,
-    "max_5xx_rate": 0.01
-  },
-  "window": "2025-07-20..2025-08-19",
-  "sample_size": 1
+    "p95_ms": 200,
+    "p99_ms": 400,
+    "5xx_rate_max": 0.005
+  }
 }

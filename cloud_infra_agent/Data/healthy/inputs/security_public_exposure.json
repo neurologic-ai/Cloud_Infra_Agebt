@@ -1,16 +1,22 @@
 {
-  "network_policies": [],
-  "storage_acls": [],
-  "inventory": [
+  "network_policies": [
     {
-      "id": "i-1",
-      "public_ip": false
-    },
-    {
-      "id": "i-2",
-      "public_ip": false
+      "rule": "203.0.113.0/24:22",
+      "proto": "tcp",
+      "env": "prod"
     }
   ],
-  "window": "2025-07-20..2025-08-19",
-  "sample_size": 0
+  "storage_acls": [
+    {
+      "bucket": "org-logs",
+      "public": false
+    }
+  ],
+  "inventory": [
+    {
+      "id": "i-123",
+      "public_ip": false,
+      "sensitive": true
+    }
+  ]
 }

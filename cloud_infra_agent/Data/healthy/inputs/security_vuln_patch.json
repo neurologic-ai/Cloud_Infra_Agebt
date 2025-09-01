@@ -1,22 +1,20 @@
 {
   "findings": [
     {
-      "severity": "LOW",
+      "severity": "HIGH",
       "resolved": true
     }
   ],
   "patch_status": {
-    "agent_coverage_pct": 0.96,
-    "avg_patch_age_days": 9
+    "agent_coverage_pct": 0.97,
+    "avg_patch_age_days": 10,
+    "sla": {
+      "critical_days": 7,
+      "high_days": 30
+    }
   },
   "denominators": {
-    "total_assets": 220,
-    "scanned_assets": 215
-  },
-  "patch_sla_days": {
-    "critical": 7,
-    "high": 30
-  },
-  "window": "2025-07-20..2025-08-19",
-  "sample_size": 1
+    "total_assets": 500,
+    "scanned_assets": 495
+  }
 }

@@ -3,8 +3,6 @@
   "slo_breaches": [],
   "slo": {
     "objective": "availability",
-    "target": 0.995
-  },
-  "sample_size": 0,
-  "window": "2025-07-20..2025-08-19"
+    "target": 0.999
+  }
 }

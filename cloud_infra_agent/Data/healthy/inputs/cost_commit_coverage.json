@@ -1,15 +1,13 @@
 {
   "commit_inventory": [
     {
-      "commit_usd_hour": 20.0
+      "commit_usd_hour": 10.0
     }
   ],
   "usage": [
     {
-      "used_usd_hour": 19.0,
+      "used_usd_hour": 9.7,
       "hours": 720
     }
-  ],
-  "window": "2025-07-20..2025-08-19",
-  "sample_size": 1
+  ]
 }

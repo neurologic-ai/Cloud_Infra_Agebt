@@ -46,7 +46,7 @@ def _resolve_task_input(metric_name: str, ctx: Dict[str, Any]) -> Dict[str, Any]
     if isinstance(params, dict) and params:
         return params
 
-    sample = (ctx or {}).get("sample_name", "Sample2")
+    sample = (ctx or {}).get("sample_name", "healthy")
     backbone_id = NAME_TO_BACKBONE_ID[metric_name]
 
     # ✅ Pass the Data ROOT; the loader will append Sample/inputs internally

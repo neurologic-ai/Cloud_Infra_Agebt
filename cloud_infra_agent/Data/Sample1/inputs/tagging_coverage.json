@@ -1,30 +1,8 @@
 {
-  "resources": [
-    {
-      "cloud": "aws",
-      "id": "i-0a1b2c",
-      "kind": "vm",
-      "tags": {
-        "env": "prod",
-        "owner": "ml-team",
-        "cost-center": "CC101",
-        "service": "fraud"
-      }
-    },
-    {
-      "cloud": "gcp",
-      "id": "gce-1",
-      "kind": "vm",
-      "tags": {
-        "env": "dev",
-        "owner": "data"
-      }
-    }
-  ],
-  "required_tags": [
-    "env",
-    "owner",
-    "cost-center",
-    "service"
-  ]
-}
+            "resources": [
+                {"id": "r1", "tags": {"env": "prod"}},  
+                {"id": "r2", "tags": {}},               
+                {"id": "r3", "tags": {"owner": "ml"}}
+            ],
+            "required_tags": ["env", "owner", "cost-center", "service"]
+        }

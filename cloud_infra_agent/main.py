@@ -14,7 +14,7 @@ from cloud_infra_agent.metric_input_loader import load_metric_input
 # def _resolve_compute_fn(metric_id: str):
 #     return FN_MAP.get(metric_id)
 
-AGENT = BaseMicroAgent(model="gpt-4o-mini", temperature=0.0,api_key=OPENAI_API_KEY)
+AGENT = BaseMicroAgent(model="gpt-4.1", temperature=0.0,api_key=OPENAI_API_KEY)
 
 def run_metric_once(
     metric_id: str,
@@ -73,12 +73,12 @@ def run_metrics_threaded(
 def run_cli(sample_name: str, max_workers=6):
     output_path = Path(f"cloud_infra_agent/Data/{sample_name}/output.json")
     output_path = Path(f"cloud_infra_agent/Data/{sample_name}/scaling_effectiveness.json")
-    metric = [
-        "scaling.effectiveness"
-    ]
+    # metric = [
+    #     "scaling.effectiveness"
+    # ]
 
     results, errors = run_metrics_threaded(
-        metric, sample_name=sample_name, max_workers=max_workers
+        sample_name=sample_name, max_workers=max_workers
     )
 
     # organize output

@@ -20,31 +20,38 @@ UNIVERSAL_PREAMBLE = (
     "2 = Poor (misses target, material risks)\n"
     "1 = Critical (significant failure, urgent action)\n\n"
     "Rules:\n"
-    "- Use only provided data. If required inputs are missing, list them in 'gaps', reduce 'confidence', and adjust the score downward.\n"
+    "- Use only provided data. If required inputs are missing, put those as numbered items inside 'gaps', reduce 'confidence', and adjust the score downward.\n"
     "- Prefer normalized rates (0..1), p95/p99, and denominators. Cite exact numbers under 'evidence'.\n"
-    "- Keep actions concrete (≤5), prioritized (P0/P1/P2), and focused on the next step.\n"
+    "- Keep recommended next steps concrete (≤5) and put them INSIDE 'gaps' as numbered items (no 'actions' field).\n"
     "- Return ONLY the specified JSON. No extra text.\n"
     "- Do NOT reuse numbers from EXAMPLE OUTPUT; recompute everything from TASK INPUT."
 )
 
+# Actions are now embedded within 'gaps' as plain numbered steps
 UNIVERSAL_RESPONSE_FORMAT = (
     '{"metric_id":"<id>",'
     '"score":<1-5>,'
-    '"rationale":"<2-4 sentences>",'
+    '"rationale":"<2-4 sentences, human-readable>",'
     '"evidence":{},'
-    '"gaps":[],'
-    '"actions":[{"priority":"P0|P1|P2","action":"..."}],'
-    '"confidence":<0.0-1.0>'
+    '"gaps":["1. <missing-data or action step>", "2. <next step>"],'
+    '"confidence":<0.0-1.0>}'
+)
+
+# Helper note appended to every metric prompt to reinforce the contract
+APPEND_TO_ALL_METRICS = (
+    "\nOUTPUT NOTE: Put ALL missing-data notes and recommended next steps inside 'gaps' "
+    "as a numbered list like ['1. ...','2. ...']. Do NOT include a top-level 'actions' field."
 )
 
 # =========================
 # Metric definitions
 # =========================
 # Each metric has:
-# - system: the full prompt (universal preamble + rubric)
+# - system: the full prompt (universal preamble + rubric + output note)
 # - example_input: canonical JSON example
+# - input_key_meanings: friendly meanings
 # - response_format: always UNIVERSAL_RESPONSE_FORMAT
-# - example_output: example JSON response
+# - example_output: example JSON response (with numbered 'gaps', no 'actions')
 
 METRIC_PROMPTS = {
     # 1) Tagging coverage
@@ -57,6 +64,7 @@ METRIC_PROMPTS = {
             "- 3: 70-84% fully tagged; some gaps in critical tags\n"
             "- 2: 50-69% fully tagged; many missing critical tags\n"
             "- 1: <50% fully tagged OR critical tags absent on >25% of prod resources"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "resources": [
@@ -75,10 +83,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "tagging.coverage",
             "score": 3,
-            "rationale": "~50% fully tagged; missing critical tags on prod resources increases allocation and ownership risk.",
+            "rationale": "About half the resources are fully tagged. Missing critical tags on production items make ownership and cost attribution harder.",
             "evidence": {"coverage_pct": 0.5, "missing_examples": [{"id": "y", "missing": ["cost-center", "service"]}]},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Enforce env/owner/cost-center/service tags in CI & provisioning"}],
+            "gaps": [
+                "1. Enforce env/owner/cost-center/service tags in CI & provisioning"
+            ],
             "confidence": 0.8
         }
     },
@@ -93,6 +102,7 @@ METRIC_PROMPTS = {
             "- 3: 50-64% instances at 40-70% CPU/mem; 20-35% low-util\n"
             "- 2: 30-49% instances at 40-70% CPU/mem; 36-50% low-util\n"
             "- 1: <30% instances at 40-70% CPU/mem OR >50% low-util (fleet largely idle)"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "instances": [
@@ -111,10 +121,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "compute.utilization",
             "score": 2,
-            "rationale": "Significant idle capacity; half the fleet shows persistent low utilization.",
+            "rationale": "A large share of capacity is idle. One instance shows prolonged low utilization, pulling down overall efficiency.",
             "evidence": {"idle_pct": 0.5, "worst_idle_hours": 200, "fleet_cpu_p95": 0.325, "fleet_mem_p95": 0.40},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Rightsize or stop idle instance 'b' and set off-hours schedules"}],
+            "gaps": [
+                "1. Rightsize or stop idle instance 'b' and implement off-hours schedules"
+            ],
             "confidence": 0.9
         }
     },
@@ -129,6 +140,7 @@ METRIC_PROMPTS = {
             "- 3: Moderate imbalance: binpack 0.6-0.7 OR pending 3-5\n"
             "- 2: Severe imbalance: binpack 0.5-0.59 OR pending 6-10\n"
             "- 1: Chronic inefficiency: binpack <0.5 OR >10 pending pods"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "nodes": {"cpu_p95": 0.6, "mem_p95": 0.58},
@@ -147,10 +159,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "k8s.utilization",
             "score": 5,
-            "rationale": "Requests closely match usage with strong bin-packing and minimal pending pods.",
+            "rationale": "Requests closely match actual usage, packing is efficient, and pending work is minimal. The cluster is using resources well.",
             "evidence": {"binpack_efficiency": 0.82, "pending_pods_p95": 1, "nodes_cpu_p95": 0.60, "pods_cpu_req_vs_used": 0.80},
-            "gaps": [],
-            "actions": [{"priority": "P2", "action": "Maintain current request/limit ratios; re-verify quarterly"}],
+            "gaps": [
+                "1. Maintain current request/limit ratios and re-verify quarterly"
+            ],
             "confidence": 0.85
         }
     },
@@ -165,35 +178,14 @@ METRIC_PROMPTS = {
             "- 3: Reaction median 2-5 min; violations 10-20%; thrash <20% (mild); delta error 20-35%\n"
             "- 2: Reaction median 5-10 min; violations 20-35%; thrash 20-35% (frequent); delta error 35-60%\n"
             "- 1: Reaction median >10 min; violations >35%; thrash >35% (severe); delta error >60%\n\n"
-
             "DEFINITIONS (using only provided inputs):\n"
             "- Preprocessing: sort ts_metrics by ts ascending; sort scale_events by ts ascending.\n"
-            "- Target violation: |actual_cpu - target_cpu| / target_cpu > 0.05 (STRICT '>'). "
-            "Violation rate = (#violating samples / #ts_metrics) * 100.\n"
-            "- Reaction time: Identify each breach start (a violating sample whose previous sample is non-violating or absent). "
-            "Reaction for a breach = seconds from breach start to the first corrective scale_event (scale_out if actual>target, scale_in if actual<target). "
-            "If no corrective event occurs after breach start, use 601s for that breach. Use the MEDIAN across breaches (if 1 breach, use that value).\n"
-            "- Thrash: Consider ADJACENT scale_events only. A flip occurs when direction changes (out->in or in->out) AND the time delta between those two events is <300 seconds (STRICT '<'). "
-            "Thrash % = (flips / total_events) * 100. If total_events < 2, thrash = 0%.\n"
-            "- Delta adequacy (error%): For the FIRST breach only, let ratio = actual/target at breach start; needed_delta ~= round((ratio - 1) * 10). "
-            "For under-target breaches, needed_delta is negative. Find the first corrective event at/after breach start in the corrective direction. "
-            "If none, error = 100%. Else error% = abs(|applied_delta| - |needed_delta|) / max(1, |needed_delta|) * 100.\n\n"
-
-            "SCORING STEPS (deterministic):\n"
-            "1) Compute violation %, reaction median (seconds), thrash %, delta_error % exactly as defined.\n"
-            "2) Map each to tiers per the RUBRIC; average the four tiers equally; round to nearest integer (0.5 rounds up).\n"
-            "3) Populate 'evidence' with: median_reaction_s, target_violation_pct, thrash_rate, delta_error_pct, events, total_samples, violating_samples, first_breach_ts, first_corrective_ts, needed_delta, applied_delta.\n"
-            "4) First compute internally; then return ONLY the final JSON.\n\n"
-
-            "SANITY CHECKS (must pass):\n"
-            "- If any corrective event exists <600s after breach start, median_reaction_s MUST be <600.\n"
-            "- A sample at exactly 5% deviation is NOT a violation.\n"
-            "- A reversal at exactly 5 minutes is NOT thrash (must be strictly <300s).\n"
-            "- target_violation_pct == (violating_samples / total_samples) * 100 (round to 2 decimals).\n"
-            "- If |applied_delta| == |needed_delta|, then delta_error_pct == 0.\n"
-            "- total_samples == len(ts_metrics) and events == len(scale_events).\n\n"
-
-            "===== NON-AUTHORITATIVE EXAMPLE (DO NOT COPY NUMBERS) =====\n"
+            "- Target violation: |actual_cpu - target_cpu| / target_cpu > 0.05 (STRICT '>'). Violation rate = (#violating samples / #ts_metrics) * 100.\n"
+            "- Reaction time: Identify each breach start (a violating sample whose previous sample is non-violating or absent). Reaction for a breach = seconds from breach start to the first corrective scale_event. If none after breach start, use 601s. Use MEDIAN across breaches.\n"
+            "- Thrash: Adjacent event direction flips under 300s count as thrash.\n"
+            "- Delta adequacy (error%): Compare applied_delta to needed_delta computed from first breach.\n\n"
+            "SCORING STEPS: compute metrics, map to tiers, average, round; populate evidence; return ONLY JSON."
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "ts_metrics": [
@@ -217,12 +209,10 @@ METRIC_PROMPTS = {
             "scale_events[].delta": "Change in replica count or capacity"
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
-
-        # Use a GOOD-CASE example to avoid anchoring wrong numbers.
         "example_output": {
             "metric_id": "scaling.effectiveness",
             "score": 5,
-            "rationale": "Very fast reaction (~40s), violation rate under 5%, no thrash, and delta matched the overload.",
+            "rationale": "The system reacted quickly to overload, kept violations rare, avoided oscillation, and applied the right scale step.",
             "evidence": {
                 "median_reaction_s": 40,
                 "target_violation_pct": 4.76,
@@ -236,16 +226,12 @@ METRIC_PROMPTS = {
                 "needed_delta": 5,
                 "applied_delta": 5
             },
-            "gaps": [],
-            "actions": [
-                {"priority": "P2", "action": "Maintain current step sizing; monitor for oscillation under changing traffic patterns."}
+            "gaps": [
+                "1. Maintain current step sizing; monitor for oscillation under changing traffic patterns"
             ],
             "confidence": 0.8
         }
     },
-
-
-
 
     # 5) DB utilization
     "db.utilization": {
@@ -257,6 +243,7 @@ METRIC_PROMPTS = {
             "- 3: 20-85% CPU with connection/IOPS imbalance at times\n"
             "- 2: <20% or >85% CPU frequently; recurring bottlenecks\n"
             "- 1: Chronically idle (<10%) or saturated (>90%) across fleet"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "databases": [
@@ -274,10 +261,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "db.utilization",
             "score": 3,
-            "rationale": "Fleet shows a mix of idle and moderately loaded databases; sizing is uneven.",
+            "rationale": "The fleet mixes idle and moderately loaded databases, suggesting uneven sizing.",
             "evidence": {"low_util_count": 1, "high_util_count": 0, "fleet_cpu_p95_avg": 0.35},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Downsize or consolidate idle DB 'b'; validate connection limits"}],
+            "gaps": [
+                "1. Downsize or consolidate idle DB 'b' and validate connection limits"
+            ],
             "confidence": 0.82
         }
     },
@@ -292,6 +280,7 @@ METRIC_PROMPTS = {
             "- 3: Periodic SLO breaches or elevated 5xx\n"
             "- 2: Frequent breaches or sustained 5xx\n"
             "- 1: Chronic SLO failures and/or major instability"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "load_balancers": [
@@ -314,10 +303,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "lb.performance",
             "score": 5,
-            "rationale": "Latency and error‑rate SLOs met with margin; negligible unhealthy time.",
+            "rationale": "Latency and error rates are comfortably within SLO, and the load balancer stayed healthy almost the entire time.",
             "evidence": {"breaches": 0, "worst_lb": "alb-1", "p95_ms": 130, "p99_ms": 260, "r5xx": 0.003, "requests": 1200000},
-            "gaps": [],
-            "actions": [{"priority": "P2", "action": "Maintain capacity & SLO thresholds; review monthly"}],
+            "gaps": [
+                "1. Maintain capacity and SLO thresholds; review monthly"
+            ],
             "confidence": 0.86
         }
     },
@@ -332,13 +322,14 @@ METRIC_PROMPTS = {
             "- 3: Noticeable but not severe\n"
             "- 2: Significant avoidable cost\n"
             "- 1: Systemic waste across tiers"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "block_volumes": [{"id": "v", "attached": False}],
             "snapshots": [{"id": "s", "source_volume": None}],
             "objects": [{"storage_class": "STANDARD", "last_modified": "2024-01-01T00:00:00Z"}]
         },
-         "input_key_meanings": {
+        "input_key_meanings": {
             "block_volumes": "List of block volumes and their attachment state",
             "block_volumes[].id": "Volume identifier",
             "block_volumes[].attached": "Boolean attachment flag",
@@ -352,10 +343,13 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "storage.efficiency",
             "score": 2,
-            "rationale": "Unattached volumes and orphaned snapshots indicate avoidable spend; hot tier holds stale objects.",
+            "rationale": "There are unattached volumes, orphaned snapshots, and stale objects kept on the hot tier — all adding avoidable cost.",
             "evidence": {"unattached": 1, "orphaned_snaps": 1, "hot_stale_objects": 1},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Delete orphaned snapshots; reattach or remove volume; set S3 lifecycle to infrequent access"}],
+            "gaps": [
+                "1. Delete orphaned snapshots",
+                "2. Reattach or remove unattached volumes",
+                "3. Apply lifecycle policies to move stale objects to infrequent access"
+            ],
             "confidence": 0.85
         }
     },
@@ -370,6 +364,7 @@ METRIC_PROMPTS = {
             "- 3: 70-84% IaC-managed OR some high drifts\n"
             "- 2: 50-69% IaC-managed OR multiple high/critical drifts\n"
             "- 1: <50% IaC-managed OR widespread critical drift"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "inventory": [{"id": "a"}, {"id": "b"}],
@@ -387,10 +382,12 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "iac.coverage_drift",
             "score": 3,
-            "rationale": "Coverage sits near 50% with high-severity drift present; unmanaged resources increase change risk.",
+            "rationale": "IaC coverage is near half, and there is at least one high-severity drift to address.",
             "evidence": {"coverage_pct": 0.5, "high_critical": 1},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Onboard unmanaged resources to Terraform; remediate high-severity drift"}],
+            "gaps": [
+                "1. Onboard unmanaged resources to Terraform",
+                "2. Remediate high-severity drift findings first"
+            ],
             "confidence": 0.8
         }
     },
@@ -405,6 +402,7 @@ METRIC_PROMPTS = {
             "- 3: Some incidents, MTTR 2-4h, breaches present\n"
             "- 2: Frequent incidents or MTTR 4-8h\n"
             "- 1: Severe/frequent incidents, MTTR >8h"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "incidents": [{"sev": 2, "opened": "t0", "resolved": "t1"}],
@@ -414,8 +412,8 @@ METRIC_PROMPTS = {
         "input_key_meanings": {
             "incidents": "Array of incident records in the scoring window",
             "incidents[].sev": "Severity level (1=critical, 2=major, 3=minor, etc.)",
-            "incidents[].opened": "Timestamp when incident started (ISO 8601 recommended)",
-            "incidents[].resolved": "Timestamp when incident was resolved (same format)",
+            "incidents[].opened": "Timestamp when incident started",
+            "incidents[].resolved": "Timestamp when incident was resolved",
             "slo_breaches": "Array of SLO violations observed",
             "slo_breaches[].hours": "Total hours of breach for that occurrence",
             "slo": "Definition of the service-level objective applied",
@@ -426,10 +424,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "availability.incidents",
             "score": 4,
-            "rationale": "A single Sev2 was resolved quickly with limited SLO breach time.",
+            "rationale": "There was a single major incident that was resolved quickly with limited SLO breach time.",
             "evidence": {"sev12_30d": 1, "mttr_h": 1.0, "slo_breach_hours": 1.0, "slo_target": 0.995},
-            "gaps": [],
-            "actions": [{"priority": "P2", "action": "Review post-mortem for mitigations; confirm alert thresholds"}],
+            "gaps": [
+                "1. Review post-mortem for mitigations and confirm alert thresholds"
+            ],
             "confidence": 0.85
         }
     },
@@ -444,6 +443,7 @@ METRIC_PROMPTS = {
             "- 3: Idle 5-10% of total spend\n"
             "- 2: Idle 10-20% of total spend\n"
             "- 1: Idle >20%"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "cost_rows": [
@@ -468,10 +468,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "cost.idle_underutilized",
             "score": 2,
-            "rationale": "Idle cost forms a significant share of spend with persistently underutilized instances.",
+            "rationale": "Idle resources account for a large share of spend, driven by persistently underutilized instances.",
             "evidence": {"idle_cost": 100, "idle_pct": 0.5, "total_cost": 200},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Stop or downsize idle instance 'a'; apply off‑hours schedules"}],
+            "gaps": [
+                "1. Stop or downsize idle instance 'a' and apply off-hours schedules"
+            ],
             "confidence": 0.88
         }
     },
@@ -486,6 +487,7 @@ METRIC_PROMPTS = {
             "- 3: 70-84% coverage AND 11-20% unused commitment\n"
             "- 2: 50-69% coverage OR 21-30% unused commitment\n"
             "- 1: <50% coverage OR >30% unused commitment"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "commit_inventory": [{"commit_usd_hour": 2.0}],
@@ -502,19 +504,14 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "cost.commit_coverage",
             "score": 4,
-            "rationale": "Coverage at ~90% with ~10% unused commitments.",
+            "rationale": "Commitment coverage is around ninety percent with a small amount of unused capacity.",
             "evidence": {"coverage_pct": 0.90, "waste_usd": 144},
-            "gaps": [],
-            "actions": [
-                {
-                    "priority": "P1",
-                    "action": "Refine commitment mix to reduce ~10% unused commitments."
-                }
+            "gaps": [
+                "1. Refine commitment mix to reduce ~10% unused commitments"
             ],
             "confidence": 0.9
         }
     },
-
 
     # 12) Cost — allocation quality
     "cost.allocation_quality": {
@@ -526,6 +523,7 @@ METRIC_PROMPTS = {
             "- 3: 75-89% costs attributable\n"
             "- 2: 50-74% costs attributable\n"
             "- 1: <50% costs attributable"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "cost_rows": [
@@ -542,10 +540,11 @@ METRIC_PROMPTS = {
         "example_output": {
             "metric_id": "cost.allocation_quality",
             "score": 3,
-            "rationale": "Only half of spend is attributable due to missing tags.",
+            "rationale": "Only half of the spend can be attributed due to missing tags on many cost lines.",
             "evidence": {"attributable_pct": 0.5},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Enforce owner/env tagging on all cost lines; backfill missing owners"}],
+            "gaps": [
+                "1. Enforce owner/env tagging on all cost lines and backfill missing owners"
+            ],
             "confidence": 0.87
         }
     },
@@ -560,6 +559,7 @@ METRIC_PROMPTS = {
             "- 3: Some risky rules or public buckets with controls\n"
             "- 2: Multiple unnecessary exposures\n"
             "- 1: Widespread exposure of sensitive prod assets"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "network_policies": [{"rule": "0.0.0.0/0:22"}],
@@ -568,26 +568,29 @@ METRIC_PROMPTS = {
         },
         "input_key_meanings": {
             "network_policies": "Array of ingress/SG/firewall rules in scope.",
-            "network_policies[].rule": "CIDR:port or CIDR:port-range (e.g., '0.0.0.0/0:22', '0.0.0.0/0:80-443').",
-            "network_policies[].proto": "Optional protocol (e.g., 'tcp', 'udp'); default tcp if omitted.",
-            "network_policies[].env": "Optional environment tag (e.g., 'prod', 'dev') for risk weighting.",
+            "network_policies[].rule": "CIDR:port or CIDR:port-range",
+            "network_policies[].proto": "Optional protocol (default tcp).",
+            "network_policies[].env": "Optional environment tag for risk weighting.",
             "storage_acls": "Array of object-storage ACLs/policies evaluated for public access.",
             "storage_acls[].bucket": "Bucket/container identifier.",
-            "storage_acls[].public": "Boolean — true if bucket/objects are publicly listable or readable.",
-            "storage_acls[].exception_approved": "Optional boolean — true if a documented exception exists.",
+            "storage_acls[].public": "True if bucket/objects are publicly listable or readable.",
+            "storage_acls[].exception_approved": "True if a documented exception exists.",
             "inventory": "Array of assets with exposure attributes.",
-            "inventory[].id": "Asset identifier (instance, LB, etc.).",
-            "inventory[].public_ip": "Boolean — true if asset has a routable public IP.",
-            "inventory[].sensitive": "Optional boolean — true if asset handles prod/PII/regulated data."
+            "inventory[].id": "Asset identifier.",
+            "inventory[].public_ip": "True if asset has a public IP.",
+            "inventory[].sensitive": "True if asset handles prod/PII/regulated data."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.public_exposure",
             "score": 2,
-            "rationale": "Public SSH access and a publicly readable bucket raise material exposure risk.",
+            "rationale": "Public SSH access, a public bucket, and exposed public IPs increase the attack surface and risk.",
             "evidence": {"open_fw_rules": 1, "public_buckets": 1, "public_ips": 1},
-            "gaps": [],
-            "actions": [{"priority": "P0", "action": "Restrict SSH to corporate CIDRs; make bucket private; remove public IPs from prod"}],
+            "gaps": [
+                "1. Restrict SSH to corporate CIDRs",
+                "2. Make the public bucket private or enforce tighter object ACLs",
+                "3. Remove public IPs from production workloads where not required"
+            ],
             "confidence": 0.88
         }
     },
@@ -602,6 +605,7 @@ METRIC_PROMPTS = {
             "- 3: 70-89% encrypted; some legacy TLS\n"
             "- 2: 50-69% encrypted; several legacy endpoints\n"
             "- 1: <50% encrypted; widespread legacy TLS"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "resources": [
@@ -611,19 +615,21 @@ METRIC_PROMPTS = {
         },
         "input_key_meanings": {
             "resources": "Array of storage or network resources to check for encryption/TLS compliance.",
-            "resources[].id": "Unique identifier for the resource (volume ID, LB name, etc.).",
+            "resources[].id": "Unique identifier for the resource.",
             "resources[].type": "Type of resource (e.g., 'block_volume', 'object_bucket', 'load_balancer').",
-            "resources[].encrypted_at_rest": "Boolean — true if data is encrypted at rest (for storage resources).",
-            "resources[].tls_policy": "String — TLS/SSL security policy enforced on endpoints (e.g., 'TLS1.2-2019-Modern')."
+            "resources[].encrypted_at_rest": "True if data is encrypted at rest (for storage resources).",
+            "resources[].tls_policy": "TLS/SSL security policy enforced on endpoints."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.encryption",
             "score": 2,
-            "rationale": "Encryption gaps and legacy TLS1.0 indicate elevated risk.",
+            "rationale": "Encryption is inconsistent and at least one endpoint uses legacy TLS, which elevates risk.",
             "evidence": {"at_rest_pct": 0.66, "legacy_tls_endpoints": 1},
-            "gaps": [],
-            "actions": [{"priority": "P1", "action": "Enable encryption on remaining volumes; upgrade LB security policy to TLS1.2+ modern"}],
+            "gaps": [
+                "1. Enable encryption on remaining volumes",
+                "2. Upgrade LB security policy to modern TLS 1.2+"
+            ],
             "confidence": 0.86
         }
     },
@@ -638,6 +644,7 @@ METRIC_PROMPTS = {
             "- 3: Some exceptions across accounts\n"
             "- 2: Many exceptions; several wildcard policies\n"
             "- 1: Systemic issues (no MFA, wildcard admin in prod)"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "users": [{"name": "a","mfa_enabled": False}],
@@ -645,26 +652,25 @@ METRIC_PROMPTS = {
             "policies": [{"actions": ["*"], "resources": ["*"]}]
         },
         "input_key_meanings": {
-            "users": "Array of IAM user accounts in scope.",
+            "users": "IAM user accounts in scope.",
             "users[].name": "Username or identifier.",
-            "users[].mfa_enabled": "Boolean — true if MFA is enabled.",
-            "keys": "Array of IAM access keys or service keys.",
-            "keys[].user": "User or service account the key belongs to.",
-            "keys[].age_days": "Age of the key in days; rotation expected <90 days.",
-            "policies": "Array of IAM policies being evaluated.",
-            "policies[].actions": "List of actions permitted (e.g., ['ec2:*'] or ['*']).",
-            "policies[].resources": "List of resources covered (e.g., ['*'] = overly permissive)."
+            "users[].mfa_enabled": "True if MFA is enabled.",
+            "keys": "IAM access keys or service keys.",
+            "keys[].user": "User/service account the key belongs to.",
+            "keys[].age_days": "Age of the key in days.",
+            "policies": "IAM policies being evaluated.",
+            "policies[].actions": "List of actions permitted.",
+            "policies[].resources": "List of resources covered."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.iam_risk",
             "score": 2,
-            "rationale": "Users without MFA and a wildcard admin policy present elevated compromise risk.",
+            "rationale": "Several basic controls are missing: some users lack MFA, old keys are still active, and a wildcard admin policy exists.",
             "evidence": {"users_without_mfa": 1, "old_keys": 1, "overly_permissive_principals": 1},
-            "gaps": [],
-            "actions": [
-                {"priority": "P0", "action": "Enforce MFA for all users immediately"},
-                {"priority": "P0", "action": "Replace wildcard admin with least-privilege roles"}
+            "gaps": [
+                "1. Enforce MFA for all users immediately",
+                "2. Replace wildcard admin with least-privilege roles"
             ],
             "confidence": 0.87
         }
@@ -680,6 +686,7 @@ METRIC_PROMPTS = {
             "- 3: Some criticals open OR avg age 21-35d\n"
             "- 2: Multiple criticals; coverage <85% OR age 35-60d\n"
             "- 1: Chronic exposure; coverage <70% OR age >60d"
+            f"{APPEND_TO_ALL_METRICS}"
         ),
         "example_input": {
             "findings": [{"severity": "CRITICAL", "resolved": False}],
@@ -691,24 +698,21 @@ METRIC_PROMPTS = {
             "denominators": {"total_assets": 420, "scanned_assets": 403}
         },
         "input_key_meanings": {
-            "findings": "Array of vulnerability findings in scope.",
-            "findings[].severity": "Severity of the finding (CRITICAL, HIGH, MEDIUM, LOW).",
-            "findings[].resolved": "Boolean — true if already remediated.",
-            "patch_status": "Summary of patch coverage/latency metrics.",
-            "patch_status.agent_coverage_pct": "Fraction of assets with patch agent reporting (0.0-1.0).",
-            "patch_status.avg_patch_age_days": "Average age (in days) of applied patches since release.",
-            "patch_status.sla": "Patch SLAs for different severity classes.",
-            "patch_status.sla.critical_days": "Expected days to patch critical vulns.",
-            "patch_status.sla.high_days": "Expected days to patch high vulns.",
-            "denominators": "Reference counts for normalization.",
+            "findings": "Vulnerability findings in scope.",
+            "findings[].severity": "Severity (CRITICAL, HIGH, MEDIUM, LOW).",
+            "findings[].resolved": "True if remediated.",
+            "patch_status": "Patch coverage/latency metrics.",
+            "patch_status.agent_coverage_pct": "Fraction of assets with patch agent reporting (0..1).",
+            "patch_status.avg_patch_age_days": "Average age (days) of applied patches since release.",
+            "patch_status.sla": "Patch SLAs for severity classes.",
             "denominators.total_assets": "Total assets in environment.",
-            "denominators.scanned_assets": "Number of assets successfully scanned/covered by agents."
+            "denominators.scanned_assets": "Assets successfully scanned/covered."
         },
         "response_format": UNIVERSAL_RESPONSE_FORMAT,
         "example_output": {
             "metric_id": "security.vuln_patch",
             "score": 3,
-            "rationale": "One critical remains open; patch agent coverage is near target with moderate patch latency.",
+            "rationale": "One critical vulnerability remains open. Coverage is close to target but patching is somewhat delayed.",
             "evidence": {
                 "critical_open": 1,
                 "agent_coverage_pct": 0.90,
@@ -717,15 +721,14 @@ METRIC_PROMPTS = {
                 "scanned_assets": 403,
                 "total_assets": 420
             },
-            "gaps": [],
-            "actions": [
-                {"priority": "P0", "action": "Patch critical CVEs on internet-exposed assets within 48 hours"},
-                {"priority": "P1", "action": "Increase patch agent coverage from 90%→95% across missing subnets"}
+            "gaps": [
+                "1. Patch critical CVEs on internet-exposed assets within 48 hours",
+                "2. Increase patch agent coverage from 90% to 95% across missing subnets"
             ],
             "confidence": 0.78
         }
     }
-    }
+}
 
 
 # =========================
@@ -758,6 +761,15 @@ def build_prompt(metric_id: str, task_input: dict) -> str:
         f"EXAMPLE OUTPUT:\n{json.dumps(meta['example_output'], indent=2)}"
     )
     logger.debug(prompt)
+    # --- add these 3 lines ---
+    # try:
+    #     existing = json.load(open("all_metric_prompts.json"))  # load if exists
+    # except FileNotFoundError:
+    #     existing = {}
+    # existing[metric_id] = prompt
+    # with open("all_metric_prompts.json", "w") as f:
+    #     json.dump(existing, f, indent=2)
+    # -------------------------
     return prompt
 
 

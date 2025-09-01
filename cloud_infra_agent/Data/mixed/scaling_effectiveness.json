@@ -1,0 +1,319 @@
+{
+  "lb.performance": {
+    "llm_output": {}
+  },
+  "compute.utilization": {
+    "llm_output": {
+      "metric_id": "compute.utilization",
+      "score": 2,
+      "rationale": "Only one of two instances is within the target 40-70% CPU/mem range, while the other is significantly underutilized. This results in 50% of the fleet being low-util, indicating material inefficiency risks.",
+      "evidence": {
+        "in_target_pct": 0.5,
+        "low_util_pct": 0.5,
+        "fleet_cpu_p95": 0.39,
+        "fleet_mem_p95": 0.44,
+        "worst_idle_hours": 120
+      },
+      "gaps": [
+        "1. Investigate and rightsize or decommission underutilized instance 'i-3' to improve fleet efficiency"
+      ],
+      "confidence": 0.95
+    }
+  },
+  "db.utilization": {
+    "llm_output": {
+      "metric_id": "db.utilization",
+      "score": 3,
+      "rationale": "The fleet shows one database (db-3) near the upper CPU and connection thresholds (cpu_p95: 0.74, connections_p95: 0.7), while another (db-4) is underutilized (cpu_p95: 0.18, connections_p95: 0.2). This indicates a clear imbalance and potential sizing or scaling issues.",
+      "evidence": {
+        "db-3_cpu_p95": 0.74,
+        "db-3_connections_p95": 0.7,
+        "db-4_cpu_p95": 0.18,
+        "db-4_connections_p95": 0.2,
+        "fleet_cpu_p95_avg": 0.46
+      },
+      "gaps": [
+        "1. Review workload distribution and consider resizing or consolidating db-4.",
+        "2. Monitor db-3 for CPU/connection spikes above 0.75 and plan for scaling if sustained.",
+        "3. Collect IOPS data to assess full resource balance."
+      ],
+      "confidence": 0.75
+    }
+  },
+  "k8s.utilization": {
+    "llm_output": {
+      "metric_id": "k8s.utilization",
+      "score": 2,
+      "rationale": "Binpack efficiency is just above the severe imbalance threshold at 0.71, but the pending pods p95 is 6, indicating a material risk of scheduling delays or resource contention. CPU requests vs usage is also below target at 0.68, suggesting over-requesting. These factors point to inefficiency and potential performance issues.",
+      "evidence": {
+        "binpack_efficiency": 0.71,
+        "pending_pods_p95": 6,
+        "nodes_cpu_p95": 0.62,
+        "pods_cpu_req_vs_used": 0.68
+      },
+      "gaps": [
+        "1. Investigate causes of high pending pods (p95=6) and address scheduling/resource bottlenecks.",
+        "2. Tune pod resource requests to better match actual usage (current CPU req/used=0.68).",
+        "3. Monitor binpack efficiency and pending pods after changes to confirm improvement."
+      ],
+      "confidence": 0.7
+    }
+  },
+  "scaling.effectiveness": {
+    "llm_output": {
+      "metric_id": "scaling.effectiveness",
+      "score": 3,
+      "rationale": "The system reacted to the breach in 90 seconds, which is near the target, but the violation rate is high at 100%. No thrash was observed, but the applied delta was likely insufficient, with a delta error of 50%. There are clear risks due to persistent violations and under-scaling.",
+      "evidence": {
+        "median_reaction_s": 90,
+        "target_violation_pct": 100.0,
+        "thrash_rate": 0.0,
+        "delta_error_pct": 50.0,
+        "events": 1,
+        "total_samples": 3,
+        "violating_samples": 3,
+        "first_breach_ts": "2025-08-11T09:00:00Z",
+        "first_corrective_ts": "2025-08-11T09:01:30Z",
+        "needed_delta": 2,
+        "applied_delta": 1
+      },
+      "gaps": [
+        "1. All samples are violations; review autoscaler sensitivity and baseline capacity.",
+        "2. Increase scale_out delta to at least 2 to match observed demand.",
+        "3. Collect more samples and events to confirm trends and tune thresholds."
+      ],
+      "confidence": 0.7
+    }
+  },
+  "tagging.coverage": {
+    "llm_output": {
+      "metric_id": "tagging.coverage",
+      "score": 2,
+      "rationale": "Only 0% of resources are fully tagged with all required tags. Critical tags are missing on multiple resources, including production, which poses material risks for ownership and cost tracking.",
+      "evidence": {
+        "coverage_pct": 0.0,
+        "critical_tags_missing_on_prod": [
+          {
+            "id": "db-3",
+            "missing": [
+              "owner",
+              "cost-center",
+              "service"
+            ]
+          },
+          {
+            "id": "i-3",
+            "missing": [
+              "cost-center"
+            ]
+          }
+        ],
+        "missing_examples": [
+          {
+            "id": "i-3",
+            "missing": [
+              "cost-center"
+            ]
+          },
+          {
+            "id": "i-4",
+            "missing": [
+              "cost-center",
+              "service"
+            ]
+          },
+          {
+            "id": "db-3",
+            "missing": [
+              "owner",
+              "cost-center",
+              "service"
+            ]
+          }
+        ]
+      },
+      "gaps": [
+        "1. Add missing 'cost-center' and 'service' tags to all resources.",
+        "2. Ensure 'owner' tag is present on all production resources.",
+        "3. Implement automated checks to enforce all required tags at provisioning."
+      ],
+      "confidence": 0.9
+    }
+  },
+  "iac.coverage_drift": {
+    "llm_output": {
+      "metric_id": "iac.coverage_drift",
+      "score": 3,
+      "rationale": "IaC coverage is at 50%, and there is one high-severity drift finding present. This indicates clear risks that need to be addressed to improve infrastructure management and reduce drift.",
+      "evidence": {
+        "coverage_pct": 0.5,
+        "high_critical": 1
+      },
+      "gaps": [
+        "1. Increase IaC coverage by onboarding unmanaged resources (i-4, db-4)",
+        "2. Remediate the high-severity drift finding"
+      ],
+      "confidence": 0.8
+    }
+  },
+  "cost.idle_underutilized": {
+    "llm_output": {
+      "metric_id": "cost.idle_underutilized",
+      "score": 2,
+      "rationale": "Idle resources represent a significant portion of total spend. Instance 'i-3' is underutilized (cpu_p95: 0.16, mem_p95: 0.2) and accounts for 45.8% of total costs, indicating material waste.",
+      "evidence": {
+        "idle_cost": 220,
+        "idle_pct": 0.458,
+        "total_cost": 480
+      },
+      "gaps": [
+        "1. Review and decommission or rightsize idle instance 'i-3' to reduce unnecessary spend"
+      ],
+      "confidence": 0.95
+    }
+  },
+  "availability.incidents": {
+    "llm_output": {
+      "metric_id": "availability.incidents",
+      "score": 4,
+      "rationale": "There was one Sev2 (major) incident in the scoring window, with a mean time to resolve (MTTR) of 2.0 hours and 1.4 hours of SLO breach. This meets the target for incident frequency but MTTR is slightly above the ideal threshold, and there are minor SLO breach hours.",
+      "evidence": {
+        "sev12_30d": 1,
+        "mttr_h": 2.0,
+        "slo_breach_hours": 1.4,
+        "slo_target": 0.995
+      },
+      "gaps": [
+        "1. Confirm if incident response processes can be improved to reduce MTTR below 2 hours.",
+        "2. Analyze root cause of SLO breach and implement preventive measures."
+      ],
+      "confidence": 0.85
+    }
+  },
+  "cost.commit_coverage": {
+    "llm_output": {
+      "metric_id": "cost.commit_coverage",
+      "score": 3,
+      "rationale": "Coverage is 75% with 25% of committed spend unused, indicating clear risks and material waste. This level of unused commitment suggests the need for better alignment between commitments and actual usage.",
+      "evidence": {
+        "coverage_pct": 0.75,
+        "waste_usd": 7200
+      },
+      "gaps": [
+        "1. Analyze usage patterns to better align future commitments with actual demand.",
+        "2. Review and adjust commitment levels to reduce 25% unused spend."
+      ],
+      "confidence": 0.9
+    }
+  },
+  "cost.allocation_quality": {
+    "llm_output": {
+      "metric_id": "cost.allocation_quality",
+      "score": 2,
+      "rationale": "Only 45.8% of the total cost is attributable to a tag, as one of the two cost rows lacks any tags. This presents a material risk to cost attribution and transparency.",
+      "evidence": {
+        "total_cost": 480,
+        "attributable_cost": 220,
+        "attributable_pct": 0.458
+      },
+      "gaps": [
+        "1. Require tagging (at minimum 'env' and 'owner') on all cost rows.",
+        "2. Backfill missing tags for existing untagged cost items."
+      ],
+      "confidence": 0.75
+    }
+  },
+  "storage.efficiency": {
+    "llm_output": {
+      "metric_id": "storage.efficiency",
+      "score": 3,
+      "rationale": "There is one unattached block volume and one hot-tier object that appears stale, but no orphaned snapshots. These represent clear but not severe waste, with opportunities to optimize storage costs.",
+      "evidence": {
+        "unattached": 1,
+        "orphaned_snaps": 0,
+        "hot_stale_objects": 1
+      },
+      "gaps": [
+        "1. Confirm if unattached volume 'vol-32' is still needed; remove if not in use",
+        "2. Review object storage lifecycle policies and move stale objects to a colder tier if appropriate",
+        "3. Define a threshold for object staleness (e.g., days since last_modified) to standardize future assessments"
+      ],
+      "confidence": 0.9
+    }
+  },
+  "security.public_exposure": {
+    "llm_output": {
+      "metric_id": "security.public_exposure",
+      "score": 4,
+      "rationale": "There is one open ingress rule allowing 0.0.0.0/22 on port 443, which is generally acceptable for HTTPS but should be reviewed for necessity. No public buckets or public IPs are present, reducing overall exposure risk.",
+      "evidence": {
+        "open_fw_rules": 1,
+        "public_buckets": 0,
+        "public_ips": 0
+      },
+      "gaps": [
+        "1. No information on whether the open 443 rule is for production or non-production; clarify environment and necessity.",
+        "2. Review and document justification for any open 0.0.0.0/22 ingress, even on HTTPS.",
+        "3. Periodically audit for new public IPs or storage exposures."
+      ],
+      "confidence": 0.85
+    }
+  },
+  "security.iam_risk": {
+    "llm_output": {
+      "metric_id": "security.iam_risk",
+      "score": 3,
+      "rationale": "There is at least one user without MFA enabled, which presents a clear risk. No access keys are older than 90 days, and there are no policies provided to assess for wildcard admin permissions. The lack of policy data limits the assessment.",
+      "evidence": {
+        "users_without_mfa": 1,
+        "old_keys": 0,
+        "overly_permissive_principals": "unknown"
+      },
+      "gaps": [
+        "1. Require MFA for all users, including dave",
+        "2. Provide full list of IAM policies to assess for wildcard or overly permissive access"
+      ],
+      "confidence": 0.7
+    }
+  },
+  "security.vuln_patch": {
+    "llm_output": {
+      "metric_id": "security.vuln_patch",
+      "score": 2,
+      "rationale": "Patch agent coverage is 82%, below the 85% threshold, and average patch age is 26 days, exceeding the 21-day target. There are no open criticals, but there is at least one unresolved high-severity vulnerability. Material risks remain due to low coverage and patch latency.",
+      "evidence": {
+        "critical_open": 0,
+        "high_open": 1,
+        "agent_coverage_pct": 0.82,
+        "avg_patch_age_days": 26,
+        "scanned_assets": 230,
+        "total_assets": 260
+      },
+      "gaps": [
+        "1. Raise patch agent coverage from 82% to at least 90% by enrolling missing assets",
+        "2. Reduce average patch age below 21 days to meet targets",
+        "3. Remediate open high-severity vulnerabilities promptly",
+        "4. Confirm all assets are being scanned and reporting findings"
+      ],
+      "confidence": 0.65
+    }
+  },
+  "security.encryption": {
+    "llm_output": {
+      "metric_id": "security.encryption",
+      "score": 4,
+      "rationale": "All resources are encrypted at rest or use TLS 1.2, meeting baseline requirements. However, the TLS policy is not specified as 'modern', and some resource fields are missing, introducing minor risk and uncertainty.",
+      "evidence": {
+        "at_rest_pct": 1.0,
+        "tls_1_2_endpoints": 1,
+        "modern_tls_endpoints": 0
+      },
+      "gaps": [
+        "1. Confirm if TLS1.2 policy is a modern configuration (e.g., disables weak ciphers)",
+        "2. Ensure all load balancers use a modern TLS 1.2+ policy",
+        "3. Add 'type' field for all resources for clarity"
+      ],
+      "confidence": 0.85
+    }
+  }
+}

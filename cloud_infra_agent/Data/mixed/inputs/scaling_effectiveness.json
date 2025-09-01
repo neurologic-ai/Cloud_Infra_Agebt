@@ -22,7 +22,5 @@
       "action": "scale_out",
       "delta": 1
     }
-  ],
-  "sample_size": 200,
-  "window": "2025-07-20..2025-08-19"
+  ]
 }

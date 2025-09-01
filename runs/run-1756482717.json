@@ -1,0 +1,276 @@
+{
+  "metrics": {
+    "score_commitment_coverage": {
+      "metric_id": "cost.commit_coverage",
+      "category": "cost",
+      "platform": "aws",
+      "score": 3.0,
+      "confidence": 0.7,
+      "rationale": "The commitment coverage is around 75%, which is below the target range, indicating clear risks that need to be addressed. Additionally, there is a significant amount of unused commitment, particularly from the AWS savings plan.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_availability_incidents": {
+      "metric_id": "availability.incidents",
+      "category": "reliability",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.7,
+      "rationale": "There were two incidents, one critical and one major, with a mean time to resolution (MTTR) of 1.75 hours. Additionally, there was a significant SLO breach of 2.4 hours, indicating material risks to service availability.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_k8s_utilization": {
+      "metric_id": "k8s.utilization",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 3.0,
+      "confidence": 0.7,
+      "rationale": "The binpack efficiency is at 0.74, which is acceptable but not optimal, and the pending pods count is at 3, indicating some imbalance. The CPU request versus usage ratio is low at 0.58, suggesting that resources are not being utilized effectively.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_db_utilization": {
+      "metric_id": "db.utilization",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.75,
+      "rationale": "The database 'azure-sql-1' shows a critical low CPU utilization at 12%, indicating a significant underutilization issue. In contrast, 'rds-a' is within acceptable limits, but the overall fleet performance is dragged down by the underperforming instance.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_storage_efficiency": {
+      "metric_id": "storage.efficiency",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 3.0,
+      "confidence": 0.75,
+      "rationale": "There is one unattached block volume and one orphaned snapshot, indicating noticeable but not severe waste. The presence of these items suggests clear risks that need to be addressed to improve storage efficiency.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_compute_utilization": {
+      "metric_id": "compute.utilization",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 1.0,
+      "confidence": 0.7,
+      "rationale": "The majority of instances are operating below the low-utilization threshold, indicating a significant failure in resource utilization. Two instances have high low-util hours, suggesting that the fleet is largely idle.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_lb_performance": {
+      "metric_id": "lb.performance",
+      "category": "reliability",
+      "platform": "aws",
+      "score": 4.0,
+      "confidence": 0.8,
+      "rationale": "Both load balancers are performing near the SLO thresholds for p95 and p99 latency, with minor spikes observed. The 5xx error rates are below the maximum acceptable level, indicating that issues are rare.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_iac_coverage_drift": {
+      "metric_id": "iac.coverage_drift",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.7,
+      "rationale": "Only 66.67% of resources are managed by IaC, and there are multiple high and critical severity policy findings that indicate material risks.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_tagging_coverage": {
+      "metric_id": "tagging.coverage",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 3.0,
+      "confidence": 0.7,
+      "rationale": "Approximately 75% of the resources are fully tagged, but there are gaps in critical tags for production resources. This indicates a need for improvement in tagging practices to ensure better management and accountability.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_security_iam": {
+      "metric_id": "security.iam_risk",
+      "category": "security",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.75,
+      "rationale": "There are significant issues with IAM security: one user lacks MFA, there is an access key that is older than 90 days, and a wildcard admin policy is in place, which poses material risks.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_security_encryption": {
+      "metric_id": "security.encryption",
+      "category": "security",
+      "platform": "aws",
+      "score": 5.0,
+      "confidence": 1.0,
+      "rationale": "All resources are encrypted at rest and utilize a modern TLS policy, indicating a strong security posture with no material risks.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_security_vuln_patch": {
+      "metric_id": "security.vuln_patch",
+      "category": "security",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.7,
+      "rationale": "There is one critical vulnerability that remains unresolved, and the average patch age exceeds the target. Coverage is slightly below the threshold, indicating material risks.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_security_public_exposure": {
+      "metric_id": "security.public_exposure",
+      "category": "security",
+      "platform": "aws",
+      "score": 1.0,
+      "confidence": 0.75,
+      "rationale": "The presence of a public SSH access rule (0.0.0.0/0:22), a public bucket (ml-prod), and an asset with a public IP significantly increases the risk of unauthorized access and data exposure.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_cost_allocation_quality": {
+      "metric_id": "cost.allocation_quality",
+      "category": "cost",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.75,
+      "rationale": "Only 74.5% of the costs can be attributed due to missing tags on the GCP cost line, which presents material risks in understanding cost allocation.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_cost_idle_underutilized": {
+      "metric_id": "cost.idle_underutilized",
+      "category": "cost",
+      "platform": "aws",
+      "score": 2.0,
+      "confidence": 0.75,
+      "rationale": "The instance shows low utilization with a 95th percentile CPU usage of 0.09 and memory usage of 0.08, indicating significant idle time. This results in a material risk as idle resources account for a considerable share of the total spend.",
+      "findings": [],
+      "evidence_refs": []
+    },
+    "score_autoscaling_effectiveness": {
+      "metric_id": "scaling.effectiveness",
+      "category": "efficiency",
+      "platform": "aws",
+      "score": 3.0,
+      "confidence": 0.6,
+      "rationale": "The system's reaction time was within an acceptable range, but there were violations of the target CPU utilization, indicating clear risks that need to be addressed. The thrash rate was not calculated due to insufficient data on scaling actions.",
+      "findings": [],
+      "evidence_refs": []
+    }
+  },
+  "summary": {
+    "overall_score": 2.459,
+    "category_scores": {
+      "cost": 2.3400000000000003,
+      "efficiency": 2.38,
+      "reliability": 2.8,
+      "security": 2.5
+    },
+    "breakdown": [
+      {
+        "name": "cost",
+        "weight": 0.35,
+        "effective_weight_sum": 1.0,
+        "metrics": [
+          {
+            "metric": "score_commitment_coverage",
+            "weight": 0.34,
+            "score": 3.0
+          },
+          {
+            "metric": "score_cost_allocation_quality",
+            "weight": 0.33,
+            "score": 2.0
+          },
+          {
+            "metric": "score_cost_idle_underutilized",
+            "weight": 0.33,
+            "score": 2.0
+          }
+        ]
+      },
+      {
+        "name": "efficiency",
+        "weight": 0.25,
+        "effective_weight_sum": 1.0,
+        "metrics": [
+          {
+            "metric": "score_compute_utilization",
+            "weight": 0.22,
+            "score": 1.0
+          },
+          {
+            "metric": "score_k8s_utilization",
+            "weight": 0.22,
+            "score": 3.0
+          },
+          {
+            "metric": "score_db_utilization",
+            "weight": 0.18,
+            "score": 2.0
+          },
+          {
+            "metric": "score_storage_efficiency",
+            "weight": 0.18,
+            "score": 3.0
+          },
+          {
+            "metric": "score_autoscaling_effectiveness",
+            "weight": 0.2,
+            "score": 3.0
+          }
+        ]
+      },
+      {
+        "name": "reliability",
+        "weight": 0.15,
+        "effective_weight_sum": 1.0,
+        "metrics": [
+          {
+            "metric": "score_availability_incidents",
+            "weight": 0.6,
+            "score": 2.0
+          },
+          {
+            "metric": "score_lb_performance",
+            "weight": 0.4,
+            "score": 4.0
+          }
+        ]
+      },
+      {
+        "name": "security",
+        "weight": 0.25,
+        "effective_weight_sum": 1.0,
+        "metrics": [
+          {
+            "metric": "score_security_encryption",
+            "weight": 0.25,
+            "score": 5.0
+          },
+          {
+            "metric": "score_security_iam",
+            "weight": 0.25,
+            "score": 2.0
+          },
+          {
+            "metric": "score_security_public_exposure",
+            "weight": 0.25,
+            "score": 1.0
+          },
+          {
+            "metric": "score_security_vuln_patch",
+            "weight": 0.25,
+            "score": 2.0
+          }
+        ]
+      }
+    ],
+    "simple_average_debug": 2.5,
+    "count_metrics": 16,
+    "scored_metrics": 16
+  }
+}

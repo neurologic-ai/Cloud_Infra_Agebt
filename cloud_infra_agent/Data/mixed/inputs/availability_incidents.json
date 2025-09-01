@@ -14,7 +14,5 @@
   "slo": {
     "objective": "availability",
     "target": 0.995
-  },
-  "window": "2025-07-20..2025-08-19",
-  "sample_size": 1
+  }
 }
